@@ -83,10 +83,12 @@ class Maze {
                 return new Eller(this);
             case "DFS":
                 return new DFS(this);
-            case "PRIM":
-                return new PRIM(this);
             case "Kruskal":
                 return new Kruskal(this);
+            case "PRIM":
+                return new PRIM(this);
+            case "RecursiveDivision":
+                return new RecursiveDivision(this);
             case "Wilson":
                 return new Wilson(this);
             case "DFSPRIM":
@@ -1328,6 +1330,113 @@ class PRIM extends MazeAlgorithm {
                         break;
                 }
                 addWalls(this.maze, node2);
+            }
+        }
+    }
+}
+
+class RecursiveDivision extends MazeAlgorithm {
+    generationDescription() {
+        return "The Recursive Division algorithm splits the maze into smaller and smaller sections, adding walls as it bisects each section</br>"
+            + "It is a fairly unique algorithm adding walls to the maze as opposed to removing them</br>"
+            + "<ul>"
+            + "<li>Begin with an empty maze (all neighbours are connected)</li>"
+            + "<li>Choose whether you will bisect the maze horizontally or vertically.</li>"
+            + "<li>Randomly choose a place to bisect the maze and add walls (disconnect neighbours)</li>"
+            + "<li>Choose a random place along the bisected wall to leave connected</li>"
+            + "<li>Repeat from step 2 with the areas on either side of the wall.</li>"
+            + "<li>If either area has a width or height less than 2, then stop bisecting it</li>"
+            + "</ul>"
+    }
+    beforeGenerate() {
+        for (var j = 0; j < this.maze.getHeight(); ++j) {
+            for (var i = 0; i < this.maze.getWidth(); ++i) {
+                if (i != 0) {
+                    this.joinNeighbours(this.maze.getNode(i, j), this.maze.getNode(i - 1, j));
+                    this.maze.getNode(i - 1, j).reset();
+                }
+                if (j != 0) {
+                    this.joinNeighbours(this.maze.getNode(i, j), this.maze.getNode(i, j - 1));
+                    this.maze.getNode(i, j-1).reset();
+                }
+                this.maze.getNode(i, j).reset();
+            }
+        }
+    }
+    split(left, top, right, bottom) {
+        var width = Math.abs(right - left);
+        var height = Math.abs(bottom - top);
+        if (height < 2 || width < 2) {
+            return [];
+        }
+        var division = null;
+        if (width > height) {
+            division = "verticle";
+        }
+        else if (height > width) {
+            division = "horizontal";
+        }
+        else {
+            division = this.pickRandom(["verticle", "horizontal"]);
+        }
+        if (division == "horizontal") {
+            var y = top + Math.floor(Math.random() * (height - 2));
+            return [{
+                "left": left,
+                "top": top,
+                "right": right,
+                "bottom": bottom,
+                "direction": "y",
+                "position": y
+            }];
+        }
+        else {
+            var x = left + Math.floor(Math.random() * (width - 2));
+            return [{
+                "left": left,
+                "top": top,
+                "right": right,
+                "bottom": bottom,
+                "direction": "x",
+                "position": x
+            }];
+        }
+    }
+    generateMaze() {
+        let areas = this.split(0, 0, this.maze.getWidth(), this.maze.getHeight());
+        while (areas.length > 0) {
+            let area = areas.splice(0, 1)[0];
+            switch (area["direction"]) {
+                case "x":
+                    var arr = new Array(Math.abs(area["bottom"] - area["top"])).fill().map((_, i) => area["top"] + i);
+                    var skip = this.pickRandom(arr);
+                    for (var i = area["top"]; i < area["bottom"]; ++i) {
+                        if (i == skip) {
+                            continue;
+                        }
+                        var node1 = this.maze.getNode(area["position"], i);
+                        var node2 = this.maze.getNode(area["position"] + 1, i);
+                        node1.setRight(null);
+                        node2.setLeft(null);
+                    }
+                    areas.splice(0, 0, ...this.split(area["position"] + 1, area["top"], area["right"], area["bottom"]));
+                    areas.splice(0, 0, ...this.split(area["left"], area["top"], area["position"] + 1, area["bottom"]));
+                    break;
+                case "y":
+                    var arr = new Array(Math.abs(area["right"] - area["left"])).fill().map((_, i) => area["left"] + i);
+                    var skip = this.pickRandom(arr);
+                    for (var i = area["left"]; i < area["right"]; ++i) {
+                        if (i == skip) {
+                            continue;
+                        }
+                        var node1 = this.maze.getNode(i, area["position"]);
+                        var node2 = this.maze.getNode(i, area["position"] + 1);
+                        node1.setBottom(null);
+                        node2.setTop(null);
+                    }
+                    areas.splice(0, 0, ...this.split(area["left"], area["position"] + 1, area["right"], area["bottom"]));
+                    areas.splice(0, 0, ...this.split(area["left"], area["top"], area["right"], area["position"] + 1));
+                    break;
             }
         }
     }
