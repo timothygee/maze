@@ -12,6 +12,7 @@ This project implements some different maze generation and solution techniques, 
 ## Solution Methods:
 * [Breadth-first Search](https://en.wikipedia.org/wiki/Breadth-first_search)
 * [Depth-first Search](https://en.wikipedia.org/wiki/Depth-first_search)
+* [A*](https://en.wikipedia.org/wiki/A*_search_algorithm)
 
 **To run, simply open Maze.html in your browser**
 
