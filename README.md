@@ -14,6 +14,7 @@ This project implements some different maze generation and solution techniques, 
 * [Breadth-first Search](https://en.wikipedia.org/wiki/Breadth-first_search)
 * [Depth-first Search](https://en.wikipedia.org/wiki/Depth-first_search)
 * [A*](https://en.wikipedia.org/wiki/A*_search_algorithm)
+* [Wall Follower](https://en.wikipedia.org/wiki/Maze-solving_algorithm#Wall_follower)
 
 **To run, simply open Maze.html in your browser**
 
@@ -45,5 +46,7 @@ There are 2 main maze solution options.
 Algorithm specific solution options
 * DFS
   * Bias: Allows you to tell the algorithm which route direction to preference when multiple route options are available
+* Wall Follower
+  * Wall to Follow: you can follow the left or right wall
 
 
