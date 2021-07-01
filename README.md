@@ -7,6 +7,7 @@ This project implements some different maze generation and solution techniques, 
 * Randomised [Prim's Algorithm](https://en.wikipedia.org/wiki/Prim%27s_algorithm)
 * [Wilson's Algorithm](https://en.wikipedia.org/wiki/Loop-erased_random_walk#Uniform_spanning_tree)
 * [Eller's Algorithm](http://www.neocomputer.org/projects/eller.html)
+* [Aldous-Border Algorithm](https://en.wikipedia.org/wiki/Maze_generation_algorithm#Aldous-Broder_algorithm)
 * Randomised Depth-first Search/Prim's Algorithm hybrid (DFS/PRIM)
 
 ## Solution Methods:
@@ -39,7 +40,7 @@ Algorithm specific generation options
 ### Solution Options
 There are 2 main maze solution options.
 1. Solution Algorithm
-2. Solution Button
+2. Solve Button
 
 Algorithm specific solution options
 * DFS
