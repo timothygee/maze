@@ -328,6 +328,11 @@
                     if (cell.getNextPath()) {
                         color = "#745FFF";
                     }
+                    //Set a random colour per the set of the cell
+                    var set = cell.getSet();
+                    if (set != null && cell.getPathLength() == 0) {
+                        color = seededColour(set+"".toString().padStart(6, '0'));
+                    }
                     //The start and end cells have a special colour
                     if (maze.getStart().getX() == cell.getX() && maze.getStart().getY() == cell.getY() ||
                         maze.getEnd().getX() == cell.getX() && maze.getEnd().getY() == cell.getY()) {
@@ -397,6 +402,7 @@
                 <option value="PRIM">Randomised Prim's Algorithm</option>
                 <option value="Kruskal">Randomized Kruskal's Algorithm</option>
                 <option value="Wilson">Wilson’s Algorithm</option>
+                <option value="Eller">Eller's Algorithm</option>
                 <option value="DFSPRIM">Randomised DFS/PRIM</option>
             </select>
         </div>

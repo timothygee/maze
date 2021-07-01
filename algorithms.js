@@ -77,6 +77,8 @@ class Maze {
     \****************************************/
     getGenerator(type) {
         switch(type) {
+            case "Eller":
+                return new Eller(this);
             case "DFS":
                 return new DFS(this);
             case "PRIM":
@@ -286,6 +288,7 @@ class Node {
         this._pathLength = 0;
         this._updates = 0;
         this._inNextPath = false;
+        this._setNo = null;
     }
     /****************************************\
              Coords Methods
@@ -374,6 +377,14 @@ class Node {
     resetNextPath() {
         if (!this._inNextPath) return;
         this._inNextPath = false;
+        this.handleUpdate();
+    }
+    getSet() {
+        return this._setNo;
+    }
+    setSet(no) {
+        if (this._setNo == no) return;
+        this._setNo = no;
         this.handleUpdate();
     }
     /****************************************\
@@ -839,6 +850,163 @@ class DFSPRIM extends MazeAlgorithm {
             }
             else {
                 node = neighbour;
+            }
+        }
+    }
+}
+
+//Used for Eller's Algorithm to keep track of and merge groups of cells
+class Sets {
+    constructor() {
+        this.sets = {};
+    }
+    push(node, set) {
+        node.setSet(set);
+        if (!(set in this.sets)) {
+            this.sets[set] = [];
+        }
+        if (this.sets[set].includes(node)) {
+            return false;
+        }
+        else {
+            this.sets[set].push(node);
+            return true;
+        }
+    }
+    getNodesFromSetAtHeight(set, height) {
+        var nodesAt = [];
+        for (var node of set) {
+            if (node.getY() == height) {
+                nodesAt.push(node);
+            }
+        }
+        return nodesAt;
+    }
+    merge(leftNode, rightNode) {
+        var newset = leftNode.getSet();
+        var oldset = rightNode.getSet();
+        if (newset == oldset) {
+            return false;
+        }
+        var mergeok = true;
+        if (this.sets[oldset].length > this.sets[newset].length) {
+            let temp = newset;
+            newset = oldset;
+            oldset = temp;
+            mergeok = this.push(rightNode, oldset);
+        }
+        else {
+            mergeok = this.push(rightNode, newset);
+        }
+        if (mergeok) {
+            for (var node of this.sets[oldset]) {
+                this.sets[newset].push(node);
+                node.setSet(newset);
+            }
+            delete this.sets[oldset];
+        }
+        return mergeok;
+    }
+    [Symbol.iterator]() {
+        var _this = this;
+        var keys = Object.keys(this.sets);
+        return {
+            next: function () {
+                var done = keys.length == 0;
+                var value = null;
+                if (!done) {
+                    var cur = keys.splice(0, 1)[0];
+                    while (!(cur in _this.sets)) {
+                        cur = keys.splice(0, 1)[0];
+                    }
+                    value = _this.sets[cur];
+                }
+                return {
+                    value: value,
+                    done: done
+                }
+            }
+        };
+    };
+}
+
+class Eller extends MazeAlgorithm {
+    generationDescription() {
+        return "Eller's Algorithm splits the maze into collections and merges them together as it moves through the maze</br>"
+            + "The generation algorithm visualises each collection as a different colour</br>"
+            + "<ul>"
+            + "<li>Initialise the nodes of the first row so that each in its own collection</li>"
+            + "<li>Traverse through each collection and randomly merge collections together (and remove maze walls between two merge nodes)</li>"
+            + "<li>For each node horizontally, randomly add the node below to the collection (and remove the maze walls betwwen the two nodes</br>"
+            + "    Each collection MUST have one downward join</li>"
+            + "<li>In the next row any node that isn't in a collection, create new collections for each node in the row</li>"
+            + "<li>Repeat the random horizontal merge and vertical merge until the last row</li>"
+            + "<li>For the last row, join all adjacent nodes that are not already part of the same collection</li>"
+            + "</ul>";
+    }
+    generationOptions() {
+        return [
+            {
+                "type": "number",
+                "text": "Horizontal Merge %",
+                "id": "horizontalMerge",
+                "min": 1,
+                "max": 99,
+                "default": 70
+            },
+            {
+                "type": "number",
+                "text": "vertical Merge %",
+                "id": "verticalMerge",
+                "min": 1,
+                "max": 99,
+                "default": 30
+            }
+        ]
+    }
+    generateMaze(options) {
+        var sets = new Sets();
+        var setCounter = 0;
+        var horizontalMerge = options["horizontalMerge"] / 100 || 0.7;
+        var verticalMerge = options["verticalMerge"] / 100 || 0.3;
+        for (var j = 0; j < this.maze.getHeight(); ++j) {
+            for (var i = 0; i < this.maze.getWidth(); ++i) {
+                var node = this.maze.getNode(i, j);
+                if (!node.visited()) {
+                    sets.push(node, setCounter++);
+                    node.visit();
+                }
+            }
+            for (var i = 0; i < this.maze.getWidth() - 1; ++i) {
+                var leftNode = this.maze.getNode(i, j);
+                var rightNode = this.maze.getNode(i + 1, j);
+                if (Math.random() < horizontalMerge || j == this.maze.getHeight() - 1) {
+                    if (sets.merge(leftNode, rightNode)) {
+                        this.joinNeighbours(leftNode, rightNode);
+                    }
+                }
+            }
+            if (j < this.maze.getHeight() - 1) {
+                for (var set of sets) {
+                    var nodes = sets.getNodesFromSetAtHeight(set, j);
+                    var vertical = false;
+                    var nth = false;
+                    while (!vertical) {
+                        for (var topNode of nodes) {
+                            if (Math.random() < verticalMerge) {
+                                var bottomNode = this.maze.getNode(topNode.getX(), topNode.getY() + 1);
+                                sets.push(bottomNode, topNode.getSet());
+                                this.joinNeighbours(topNode, bottomNode);
+                                bottomNode.visit();
+                                vertical = true;
+                                if (nth) {
+                                    break;
+                                }
+                            }
+                        }
+                        nth = true;
+                    }
+                }
             }
         }
     }

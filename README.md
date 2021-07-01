@@ -6,6 +6,7 @@ This project implements some different maze generation and solution techniques, 
 * Randomised [Kruskal's Algorithm](https://en.wikipedia.org/wiki/Kruskal%27s_algorithm)
 * Randomised [Prim's Algorithm](https://en.wikipedia.org/wiki/Prim%27s_algorithm)
 * [Wilson's Algorithm](https://en.wikipedia.org/wiki/Loop-erased_random_walk#Uniform_spanning_tree)
+* [Eller's Algorithm](http://www.neocomputer.org/projects/eller.html)
 * Randomised Depth-first Search/Prim's Algorithm hybrid (DFS/PRIM)
 
 ## Solution Methods:
@@ -26,10 +27,13 @@ There are 4 main maze generation options.
 5. Generate Button
 
 Algorithm specific generation options
+* Eller's Algorithm
+  * Horizontal Merge %: Likeliness of merging two cells horizontally
+  * Vertical Merge %: Likeliness of merging two cells vertically
 * Wilson's Algorithm
-  * Next Node Selection: Which node should be selected to start the next path from
+  * Next Node Selection: Which node should be selected to start the next path
 * Randomised DFS/PRIM
-  * Select Random %: Allows you to define how often to choose a random node from where to continue the algorithm from
+  * Select Random %: Allows you to define how often to choose a random node from where to continue the algorithm
 
 ### Solution Options
 There are 2 main maze solution options.
