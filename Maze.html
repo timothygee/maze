@@ -1,0 +1,444 @@
+<!DOCTYPE>
+<html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>Maze</title>
+    <style type="text/css">
+        * {
+            box-sizing: border-box;
+        }
+        #button {
+            width:10em;
+        }
+        h4 {
+            margin: 0em;
+            margin-top: 0.5em;
+        }
+        .options {
+            display:inline-block;
+            max-width: 49%;
+            vertical-align: top;
+        }
+        .options > * {
+            display:inline-block;
+            margin-right:0.5em;
+        }
+        body {
+            background-color: #1E1E1E;
+            color: white;
+        }
+        .titledPanel {
+        }
+        .titledPanel > *:first-child {
+            line-height: 1.6em;
+            height: 1.6em;
+        }
+        .titledPanel > br {
+            line-height: 1.6em !important;
+            height: 1.6em !important;
+            border: 0 !important;
+        }
+        .titledPanel > * {
+            display: block;
+            width: 100%;
+            border: 0;
+        }
+        .titledPanel > select,
+        .titledPanel > input,
+        .titledPanel > button,
+        .titledPanel > label:last-child {
+            height: 1.7em;
+            margin: 0em;
+        }
+        .titledPanel > input {
+            width: 4em;
+        }
+        .titledPanel > button { 
+            width: 10em;
+        }
+        [data-id=Maze] {
+            background-color: white;
+            margin: 1em;
+        }
+        #descriptions * {
+            white-space: pre-line;
+            margin-right: 1em;
+        }
+    </style>
+    <script src="./jquery.min.js"></script>
+    <script src="./algorithms.js"></script>
+    <script type="text/javascript">
+        window.onload = function () {
+            //Gets the maze html elemet
+            function getMaze(label) {
+                $("[data-maze]").detach();
+                var $new = $("[data-id=\"mazecontainer\"]").clone();
+                $new.find("[data-id=\"label\"]").text(label);
+                $new.attr("data-id", label);
+                $new.attr("data-maze", "true");
+                $new.insertBefore($("#descriptions"));
+                $new.css("display", "inline-block");
+                return $new.find("[data-id=\"maze\"]");
+            }
+            var maze = new Maze();
+            var $maze = getMaze("Maze");
+            var $generate = $("#generate");
+            var $generation = $("#mazetype");
+            var $solution = $("#solutiontype");
+            var $solve = $("#solve");
+            $solve.prop('disabled', true);
+            var drawing = false;
+            var doUpdate = true;
+
+            //Maze update
+            maze.onUpdate(function (node) {
+                if (doUpdate) {
+                    draw(maze, $maze, node);
+                }
+            });
+
+            //Generation Setup
+            maze.onBeforeGenerate(function () {
+                draw(maze, $maze, null);
+                doUpdate = true;
+            });
+            maze.onAfterGenerate(function () {
+                doUpdate = false;
+            });
+            maze.onGenerated(function () {
+                draw(maze, $maze, null);
+                //Display solve information
+                $("#generationTime").text("Maze Generation Time:" + maze.getGenerationTime() + "ms");
+                $("#generationUpdates").text("Maze Generation Updates:" + maze.getGenerationUpdates());
+            });
+            $generation.change(function () {
+                //Clear the description
+                $("[data-gen-results],[data-sol-results]").each(function (i, el) { $(el).text(""); });
+                $("[data-maze]").detach();
+                var $generationDiv = $("#generationDiv");
+                //Remove extra solution options
+                $generationDiv.find("[data-generation-options]").detach();
+                    //Update/Draw the solution options in the GUI
+                var options = maze.getGenerationOptions($generation.val());
+                if (options.length > 0) {
+                    var extras = generateOptions(options, "generation");
+                    for (var $extra of extras) {
+                        $extra.insertBefore($("#generateButtonDiv"));
+                    }
+                }
+                $("#generationMessage").html(maze.getGenerationDescription());
+            });
+
+            //Solution setup
+            maze.onBeforeSolve(function () {
+                draw(maze, $maze, null);
+                doUpdate = true;
+            });
+            maze.onSolved(function () {
+                doUpdate = false;
+                //Display solve information
+                $("#solveTime").text("Maze Solve Time:" +maze.getSolveTime() + "ms");
+                $("#solveVisits").text("Maze Nodes Visited:" + maze.getSolveVisits());
+                $("#solveUpdates").text("Maze Solve Updates:" + maze.getSolveUpdates());
+            });
+            $solution.change(function () {
+                //Clear the description
+                $("[data-sol-results]").each(function (i, el) { $(el).text(""); });
+                var $solutionDiv = $("#solutionDiv");
+                //Remove extra solution options
+                $solutionDiv.find("[data-solution-options]").detach();
+                if ($solution.val() != "None") {
+                    //Update/Draw the solution options in the GUI
+                    var options = maze.getSolutionOptions($solution.val());;
+                    if (options.length > 0) {
+                        var extras = generateOptions(options, "solution");
+                        for (var $extra of extras) {
+                            $extra.insertBefore($("#solveButtonDiv"));
+                        }
+                    }
+                    $("#solutionMessage").html(maze.getSolutionDescription());
+                    doUpdate = false;
+                }
+                //Redraw maze
+                if (maze.resetSolution())
+                    draw(maze, $maze, null);
+            });
+            $generate.click(function () {
+                //Clear the description
+                $("[data-gen-results],[data-sol-results]").each(function (i, el) { $(el).text(""); });
+                doUpdate = false;
+                //Ger the maze and initialise it
+                $maze = getMaze("Maze");
+                var width = parseInt($("#width").val());
+                var height = parseInt($("#height").val());
+                maze.initialiseMaze(width, height);
+                //Get the generation options from the GUI
+                var mazeOptions = maze.getGenerationOptions($generation.val());
+                var options = {};
+                for (var mazeOption of mazeOptions) {
+                    options[mazeOption["id"]] = $("#auto_generation_" + mazeOption["id"]).val();
+                }
+                //generate the maze
+                maze.generateMaze($generation.val(), options);
+            });
+            $solve.click(function () {
+                //Clear the description
+                $("[data-sol-results]").each(function (i, el) { $(el).text(""); });
+                doUpdate = false;
+                //Get the solution options from the GUI
+                var mazeOptions = maze.getSolutionOptions($solution.val());
+                var options = {};
+                for (var mazeOption of mazeOptions) {
+                    options[mazeOption["id"]] = $("#auto_solution_" + mazeOption["id"]).val();
+                }
+                //Solve the maze
+                maze.solveMaze($solution.val(), options);
+            });
+
+            //This method is used to convert algorithm options to gui elements
+            function generateOptions(options, type) {
+                var extras = [];
+                for (var option of options) {
+                    var $panel = $("<div>").addClass("titledPanel");
+                    $panel.attr("data-" + type + "-options", "true");
+                    if ("tooltip" in option) {
+                        $panel.attr("title", option["tooltip"]);
+                    }
+                    switch (option["type"]) {
+                        case "select":
+                            var $select = $("<select>");
+                            for (var selectOption of option["options"]) {
+                                var $option = $("<option>").val(selectOption["value"]).text(selectOption["text"]);
+                                if ("selected" in selectOption) {
+                                    $option.attr("selected");
+                                }
+                                $select.append($option);
+                            }
+                            $panel.append($("<label>").text(option["text"]));
+                            $panel.append($select);
+                            $select.attr("id", "auto_" + type + "_" + option["id"]);
+                            break;
+                        case "number":
+                            $panel.append($("<label>").text(option["text"]));
+                            var $input = $("<input>").attr("type", "number");
+                            $input.attr("min", option["min"]);
+                            $input.attr("max", option["max"]);
+                            $input.attr("value", option["default"]);
+                            $input.attr("id", "auto_" + type + "_" + option["id"]);
+                            $input.css("width", "100%");
+                            $panel.append($input);
+                            break;
+                        case "text":
+                            $panel.append($("<label>").text(option["text"]));
+                            var $input = $("<input>").attr("type", "text");
+                            $input.attr("value", option["default"]);
+                            $input.attr("id", "auto_" + type + "_" + option["id"]);
+                            $input.css("width", "100%");
+                            $input.change(function(evt) {
+                                option["validate"](evt.target, evt.target.value);
+                            });
+                            $panel.append($input);
+                            break;
+                    }
+                    extras.push($panel);
+                }
+                return extras;
+            }
+            //Return a random colour based on a string
+            function seededColour(str) {
+                var hash = 0;
+                for (var i = 0; i < str.length; i++) {
+                    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                var colour = '#';
+                for (var i = 0; i < 3; i++) {
+                    var value = (hash >> (i * 8)) & 0xFF;
+                    colour += ('00' + value.toString(16)).substr(-2);
+                }
+                return colour;
+            }
+            /*
+             * Draw Method
+             * Currently implemented using DIVs with borders
+             * If a cell is already drawn, it will be updated
+             * If no node is passed, the entire maze is redrawn
+             * Otherwise, only one cell is updated per draw call
+             */
+            var queue = [];
+            function draw(maze, $maze, node) {
+                if (drawing) {
+                    //Something is still drawing, add the next item to the queue
+                    if (node != null && queue.length > 0) {
+                        //If the previously added item in the queue is the same as the new item, update the previous
+                        var previous = queue[queue.length - 1];
+                        if (previous.getX() == node.getX() &&
+                            previous.getY() == node.getY()) {
+                            queue[queue.length - 1] = node;
+                            return;
+                        }
+                    }
+                    queue.push(node);
+                    return;
+                }
+                else {
+                    //Disable the generate and solve buttons while drawing
+                    $generate.prop("disabled", true);
+                    $solve.prop("disabled", true);
+                    drawing = true;
+                }
+                function drawCell(cell, flashcell) {
+                    //Get the node we are updating
+                    var $og = $maze.find("[data-id=\"" + cell.getX() + ":" + cell.getY() + "\"]");
+                    var $cell;
+                    if ($og.length > 0) {
+                        $cell = $og;
+                    }
+                    else {
+                        //The cell doesn't exist, this must be the first call, create it.
+                        $cell = $("<div>");
+                        $cell.attr("data-id", cell.getX() + ":" + cell.getY());
+                        $cell.css("width", "1em");
+                        $cell.css("height", "1em");
+                        $cell.css("color", "black");
+                        $cell.css("display", "inline-block");
+                    }
+                    //Update borders
+                    $cell.css("border-top",     cell.hasTop()    ? "none": "solid black 0.07em");
+                    $cell.css("border-right",   cell.hasRight()  ? "none": "solid black 0.07em");
+                    $cell.css("border-bottom",  cell.hasBottom() ? "none": "solid black 0.07em");
+                    $cell.css("border-left",    cell.hasLeft()   ? "none": "solid black 0.07em");
+
+                    //Colors
+                    //When a maze is solved, it sets the path length from the start
+                    //We display this using a colour range
+                    //The colour will change the further from the start the node is
+                    //If the node is not in the solution but was visited (during generation or solving), then set its background colour too
+                    var color = "";
+                    if (cell.visited()) {
+                        color = "lightpink";
+                        if (cell.getPathLength() != 0 && maze.getEnd().getPathLength() != 0) {
+                            var per = cell.getPathLength() / maze.getEnd().getPathLength();
+                            var hue=(0+(1-per)*360).toString(10);
+                            color = ["hsl(",hue,",50%,50%)"].join("");
+                        }
+                    }
+                    //The start and end cells have a special colour
+                    if (maze.getStart().getX() == cell.getX() && maze.getStart().getY() == cell.getY() ||
+                        maze.getEnd().getX() == cell.getX() && maze.getEnd().getY() == cell.getY()) {
+                        color = "rgba(45, 45, 45, 0.5)";
+                    }
+                    //Set the colour to #1C0D3F, then wait and update it to the correct colour.
+                    //This will make it flash so we can easily see the cell being drawn
+                    if ($og.length == 0) {
+                        $maze.append($cell);
+                    }
+                    if (flashcell) {
+                        $cell.css("background-color", '#1C0D3F');
+                        setTimeout(function(){
+                            $cell.css('transition', 'background-color 0.01s ease-in-out 0.01s');
+                            $cell.css("background-color", color);
+                        }, 0);
+                    }
+                    else {
+                        $cell.css("background-color", color);
+                    }
+                }
+
+                //Used to know when to force cells to the next line
+                var linesin = false;
+                if ($maze.find("[data-linebreak]").length > 0) {
+                    linesin = true;
+                }
+                //No node passed, draw the entire maze
+                if (node == null) {
+                    for (var j = 0; j < maze.getHeight(); j++) {
+                        for (var i = 0; i < maze.getWidth(); ++i) {
+                            drawCell(maze.getNode(i, j), false);
+                        }
+                        if (linesin == false)
+                            $maze.append($("<div>").attr("data-linebreak", "true").css("display", "block"));
+                    }
+                }
+                else {
+                    drawCell(node, true);
+                }
+                //Wait and then get the next item in the queue
+                setTimeout(function () {
+                    drawing = false;
+                    $generate.prop("disabled", false);
+                    $solve.prop("disabled", false);
+                    if (queue.length > 0) {
+                        var next = queue.splice(0, 1);
+                        draw(maze, $maze, next[0], true);
+                    }
+                }, 0);
+            }
+
+            //Initialise generation/solutions descriptions
+            $generation.change();
+            $solution.change();
+        };
+        /* ]]> */
+    </script>
+</head>
+
+<body class="mainbody">
+    <div class="options" id="generationDiv">
+        <div class="titledPanel">
+            <label>Generation Algorithm:</label>
+            <select id="mazetype">
+                <option value="DFS">Randomised Depth First Search</option>
+                <option value="PRIM">Randomised Prim's Algorithm</option>
+                <option value="Kruskal">Randomized Kruskal's Algorithm</option>
+                <option value="DFSPRIM">Randomised DFS/PRIM</option>
+            </select>
+        </div>
+        <div class="titledPanel">
+            <label>Width:</label>
+            <input type="text" id="width" value="10"/>
+        </div>
+        <div class="titledPanel">
+            <label>Height:</label>
+            <input type="text" id="height" value="10"/>
+        </div>
+        <div class="titledPanel" id="generateButtonDiv">
+            <label> </label>
+            <button id="generate">Generate</button>
+        </div>
+    </div>
+    <div class="options" id="solutionDiv">
+        <div class="titledPanel">
+            <label>Solution Algorithm:</label>
+            <select id="solutiontype">
+                <option value="None">None</option>
+                <option value="DFS">Depth First Search</option>
+                <option value="BFS">Breadth First Search</option>
+            </select>
+        </div>
+        <div class="titledPanel" id="solveButtonDiv">
+            <label> </label>
+            <button id="solve">Solve</button>
+        </div>
+    </div>
+    </br>
+    <div data-id="mazecontainer" style="display:none">
+        <div data-id="maze" style="display:inline-block"> </div>
+    </div>
+    <div id="descriptions">
+        <div id="generationDescription" class="options">
+            <h4>Generation Algorithm</h4>
+            <label id="generationMessage"></label>
+            <label data-gen-results="true" id="generationTime"></label>
+            <label data-gen-results="true" id="generationUpdates"></label>
+        </div>
+        <div id="solutionDescription" class="options">
+            <h4>Solution Algorithm</h4>
+            <label id="solutionMessage"></label>
+            <label data-sol-results="true" id="solveTime"></label>
+            <label data-sol-results="true" id="solveVisits"></label>
+            <label data-sol-results="true" id="solveUpdates"></label>
+        </div>
+    </div>
+</body>
+</html>
