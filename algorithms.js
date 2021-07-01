@@ -2,6 +2,7 @@ class Maze {
     constructor(w, h) {
         this.width = w || 10;
         this.height = h || 10;
+        this.startend = "T2B";
         this.start = null;
         this.end = null;
         this.graph = null;
@@ -24,14 +25,22 @@ class Maze {
     /****************************************\
                 Initialise Methods
     \****************************************/
-    initialiseMaze(w, h) {
+    initialiseMaze(w, h,startend=null) {
         this.handleEvent(this._onBeforeInitialise);
         performance.mark("start");
         this.width = w || this.width;
         this.height = h || this.height;
+        this.startend = startend || this.startend;
         this.graph = new Array(this.width);
-        let startPos = [Math.floor(Math.random() * (this.width)), 0];
-        let endPos = [Math.floor(Math.random() * (this.width)), this.height - 1];
+        let startPos, endPos;
+        if (this.startend == "L2R") {
+            startPos = [0, Math.floor(Math.random() * (this.height))];
+            endPos = [this.width - 1, Math.floor(Math.random() * (this.height))];
+        }
+        else {
+            startPos = [Math.floor(Math.random() * (this.width)), 0];
+            endPos = [Math.floor(Math.random() * (this.width)), this.height - 1];
+        }
         for (var i = 0; i < this.width; ++i) {
             this.graph[i] = new Array(this.height);
             for (var j = 0; j < this.height; ++j) {

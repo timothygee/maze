@@ -21,7 +21,8 @@ There are 4 main maze generation options.
 1. Generation Algorithm
 2. Maze Width
 3. Maze Height
-4. Generate Button
+4. Maze Start/End Points (top/bottom or left/right)
+5. Generate Button
 
 Algorithm specific generation options
 * Randomised DFS/PRIM

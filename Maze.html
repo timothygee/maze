@@ -172,7 +172,8 @@
                 $maze = getMaze("Maze");
                 var width = parseInt($("#width").val());
                 var height = parseInt($("#height").val());
-                maze.initialiseMaze(width, height);
+                var startend = $("#startendpos").val();
+                maze.initialiseMaze(width, height, startend);
                 //Get the generation options from the GUI
                 var mazeOptions = maze.getGenerationOptions($generation.val());
                 var options = {};
@@ -401,6 +402,13 @@
         <div class="titledPanel">
             <label>Height:</label>
             <input type="text" id="height" value="10"/>
+        </div>
+        <div class="titledPanel">
+            <label>Start/End:</label>
+            <select id="startendpos">
+                <option value="T2B">Top to Bottom</option>
+                <option value="L2R">Left to Right</option>
+            </select>
         </div>
         <div class="titledPanel" id="generateButtonDiv">
             <label> </label>
