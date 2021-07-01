@@ -83,6 +83,8 @@ class Maze {
                 return new PRIM(this);
             case "Kruskal":
                 return new Kruskal(this);
+            case "Wilson":
+                return new Wilson(this);
             case "DFSPRIM":
                 return new DFSPRIM(this);
         }
@@ -283,6 +285,7 @@ class Node {
         this._onUpdate = [];
         this._pathLength = 0;
         this._updates = 0;
+        this._inNextPath = false;
     }
     /****************************************\
              Coords Methods
@@ -359,6 +362,19 @@ class Node {
     }
     resetUpdateCount() {
         this._updates = 0;
+    }
+    getNextPath() {
+        return this._inNextPath;
+    }
+    inNextPath() {
+        if (this._inNextPath) return;
+        this._inNextPath = true;
+        this.handleUpdate();
+    }
+    resetNextPath() {
+        if (!this._inNextPath) return;
+        this._inNextPath = false;
+        this.handleUpdate();
     }
     /****************************************\
                   Event Methods
@@ -1009,6 +1025,171 @@ class PRIM extends MazeAlgorithm {
                         break;
                 }
                 addWalls(this.maze, node2);
+            }
+        }
+    }
+}
+
+class Wilson extends MazeAlgorithm {
+    generationDescription() {
+        return "Wilson's Algorithm uses a loop-erased random walk to generate a uniform spaning tree maze (graph containing all verticies without loops).</br>"
+            + "Due to its random nature (and loop-erasing), this algorithm can be very slow when the maze is near empty.</br>"
+            + "<ul>"
+            + "<li>Remove a random node not in the maze and add it to the maze</li>"
+            + "<li>Choose another random node not in the maze and add it to a path</li>"
+            + "<li>From this node, choose a random neighbour</li>"
+            + "<li>If that node is part of the maze, add all the nodes in the path to the maze (removing the walls between each)</li>"
+            + "<li>If that node is already part of the path, remove all the nodes from the path after this node</li>"
+            + "<li>If that node is not in the path or the maze, add it to the path</li>"
+            + "<li>Repeat until all nodes are in the maze</li>"
+            + "</ul>";
+    }
+    generationOptions() {
+        return [
+            {
+                "type": "select",
+                "text": "Next Node Selection",
+                "id": "nextNode",
+                "options": [
+                    { "text": "Random", "value": "random" },
+                    { "text": "Top Left-Right", "value": "topl2r" },
+                    { "text": "Top Right-Left", "value": "topr2l" },
+                    { "text": "Top Left-Bottom Left", "value": "leftt2b" },
+                    { "text": "Top Right-Bottom Right", "value": "rightt2b" },
+                    { "text": "Bottom Left-Right", "value": "bottoml2r" },
+                    { "text": "Bottom Right-Left", "value": "bottomr2l" },
+                    { "text": "Bottom Left-Top Left", "value": "leftb2t" },
+                    { "text": "Bottom Right-Top Right", "value": "rightb2t" },
+                ]
+            }
+        ];
+    }
+    getNextNode(options, remaining) {
+        if (!("nextNode" in options) || options["nextNode"] == "random") {
+           return this.pickRandom(remaining, false);
+        }
+        var width = this.maze.getWidth();
+        var height = this.maze.getHeight();
+        //Improve selection algorithm? remember previously selected to start loop from
+        switch (options["nextNode"]) {
+            case "topl2r":
+                for (var i = 0; i < height; ++i) {
+                    for (var j = 0; j < width; ++j) {
+                        if (!this.maze.getNode(j, i).visited()) {
+                            return this.maze.getNode(j, i);
+                        }
+                    }
+                }
+                break;
+            case "topr2l":
+                for (var i = 0; i < height; ++i) {
+                    for (var j = width - 1; j >= 0 ; --j) {
+                        if (!this.maze.getNode(j, i).visited()) {
+                            return this.maze.getNode(j, i);
+                        }
+                    }
+                }
+                break;
+            case "leftt2b":
+                for (var j = 0; j < width; ++j) {
+                    for (var i = 0; i < height; ++i) {
+                        if (!this.maze.getNode(j, i).visited()) {
+                            return this.maze.getNode(j, i);
+                        }
+                    }
+                }
+                break;
+            case "rightt2b":
+                for (var j = width - 1; j >= 0 ; --j) {
+                    for (var i = 0; i < height; ++i) {
+                        if (!this.maze.getNode(j, i).visited()) {
+                            return this.maze.getNode(j, i);
+                        }
+                    }
+                }
+                break;
+            case "bottoml2r":
+                for (var i = height - 1; i >= 0 ; --i) {
+                    for (var j = 0; j < width; ++j) {
+                        if (!this.maze.getNode(j, i).visited()) {
+                            return this.maze.getNode(j, i);
+                        }
+                    }
+                }
+                break;
+            case "bottomr2l":
+                for (var i = height - 1; i >= 0 ; --i) {
+                    for (var j = width - 1; j >= 0 ; --j) {
+                        if (!this.maze.getNode(j, i).visited()) {
+                            return this.maze.getNode(j, i);
+                        }
+                    }
+                }
+                break;
+            case "leftb2t":
+                for (var j = 0; j < width; ++j) {
+                    for (var i = height - 1; i >= 0 ; --i) {
+                        if (!this.maze.getNode(j, i).visited()) {
+                            return this.maze.getNode(j, i);
+                        }
+                    }
+                }
+                break;
+            case "rightb2t":
+                for (var j = width - 1; j >= 0 ; --j) {
+                    for (var i = height - 1; i >= 0 ; --i) {
+                        if (!this.maze.getNode(j, i).visited()) {
+                            return this.maze.getNode(j, i);
+                        }
+                    }
+                }
+                break;
+        }
+    }
+    generateMaze(options) {
+        var remaining = this.maze.getNodes();
+        let node = this.getNextNode(options, remaining);
+        remaining.splice(remaining.indexOf(node), 1);
+        node.visit();
+        var path = [];
+        while (remaining.length > 0) {
+            if (path.length == 0) {
+                let startPath = this.getNextNode(options, remaining);
+                path.push(startPath);
+                startPath.inNextPath();
+            }
+            let walkNode = path[path.length - 1];
+            let neighbours = this.getNeighbours(walkNode);
+            //Not sure if this helps, but remove the previous node from the possible next nodes
+            if (path.length > 2) {
+                let previousWalkNode = path[path.length - 2];
+                if (neighbours.includes(previousWalkNode)) {
+                    neighbours.splice(neighbours.indexOf(previousWalkNode), 1);
+                }
+            }
+            let nextNode = this.pickRandom(neighbours);
+            let pos = path.indexOf(nextNode);
+            if (pos >= 0) {
+                let removed = path.splice(pos + 1);
+                for (var i = 0; i < removed.length; ++i) {
+                    removed[i].resetNextPath();
+                }
+            }
+            else if (nextNode.visited()) {
+                var previous = nextNode;
+                for (var i = path.length - 1; i >= 0; i--) {
+                    let node = path[i];
+                    node.visit();
+                    node.resetNextPath();
+                    this.joinNeighbours(node, previous);
+                    previous = node;
+                    remaining.splice(remaining.indexOf(node), 1);
+                }
+                path = [];
+            }
+            else {
+                path.push(nextNode);
+                nextNode.inNextPath();
             }
         }
     }

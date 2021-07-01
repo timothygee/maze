@@ -5,6 +5,7 @@ This project implements some different maze generation and solution techniques, 
 * Randomised [Depth-first Search](https://en.wikipedia.org/wiki/Depth-first_search)
 * Randomised [Kruskal's Algorithm](https://en.wikipedia.org/wiki/Kruskal%27s_algorithm)
 * Randomised [Prim's Algorithm](https://en.wikipedia.org/wiki/Prim%27s_algorithm)
+* [Wilson's Algorithm](https://en.wikipedia.org/wiki/Loop-erased_random_walk#Uniform_spanning_tree)
 * Randomised Depth-first Search/Prim's Algorithm hybrid (DFS/PRIM)
 
 ## Solution Methods:
@@ -25,6 +26,8 @@ There are 4 main maze generation options.
 5. Generate Button
 
 Algorithm specific generation options
+* Wilson's Algorithm
+  * Next Node Selection: Which node should be selected to start the next path from
 * Randomised DFS/PRIM
   * Select Random %: Allows you to define how often to choose a random node from where to continue the algorithm from
 

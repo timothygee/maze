@@ -324,6 +324,10 @@
                             color = ["hsl(",hue,",50%,50%)"].join("");
                         }
                     }
+                    //If the node is in the "next path"
+                    if (cell.getNextPath()) {
+                        color = "#745FFF";
+                    }
                     //The start and end cells have a special colour
                     if (maze.getStart().getX() == cell.getX() && maze.getStart().getY() == cell.getY() ||
                         maze.getEnd().getX() == cell.getX() && maze.getEnd().getY() == cell.getY()) {
@@ -392,6 +396,7 @@
                 <option value="DFS">Randomised Depth First Search</option>
                 <option value="PRIM">Randomised Prim's Algorithm</option>
                 <option value="Kruskal">Randomized Kruskal's Algorithm</option>
+                <option value="Wilson">Wilson’s Algorithm</option>
                 <option value="DFSPRIM">Randomised DFS/PRIM</option>
             </select>
         </div>
