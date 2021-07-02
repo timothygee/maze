@@ -318,8 +318,8 @@
                     var color = "";
                     if (cell.visited()) {
                         color = "lightpink";
-                        if (cell.getPathLength() != 0 && maze.getEnd().getPathLength() != 0) {
-                            var per = cell.getPathLength() / maze.getEnd().getPathLength();
+                        if (cell.getPathLength() != 0 && maze.endNode.getPathLength() != 0) {
+                            var per = cell.getPathLength() / maze.endNode.getPathLength();
                             var hue=(0+(1-per)*360).toString(10);
                             color = ["hsl(",hue,",50%,50%)"].join("");
                         }
@@ -334,8 +334,8 @@
                         color = seededColour(set+"".toString().padStart(6, '0'));
                     }
                     //The start and end cells have a special colour
-                    if (maze.getStart().getX() == cell.getX() && maze.getStart().getY() == cell.getY() ||
-                        maze.getEnd().getX() == cell.getX() && maze.getEnd().getY() == cell.getY()) {
+                    if (maze.startNode.getX() == cell.getX() && maze.startNode.getY() == cell.getY() ||
+                        maze.endNode.getX() == cell.getX() && maze.endNode.getY() == cell.getY()) {
                         color = "rgba(45, 45, 45, 0.5)";
                     }
                     //Set the colour to #1C0D3F, then wait and update it to the correct colour.
@@ -362,8 +362,8 @@
                 }
                 //No node passed, draw the entire maze
                 if (node == null) {
-                    for (var j = 0; j < maze.getHeight(); j++) {
-                        for (var i = 0; i < maze.getWidth(); ++i) {
+                    for (var j = 0; j < maze.height; j++) {
+                        for (var i = 0; i < maze.width; ++i) {
                             drawCell(maze.getNode(i, j), false);
                         }
                         if (linesin == false)

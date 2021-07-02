@@ -1,10 +1,10 @@
 class Maze {
     constructor(w, h) {
-        this.width = w || 10;
-        this.height = h || 10;
+        this._width = w || 10;
+        this._height = h || 10;
         this.startend = "T2B";
-        this.start = null;
-        this.end = null;
+        this._start = null;
+        this._end = null;
         this.graph = null;
         this.generator = null;
         this.solver = null;
@@ -23,13 +23,28 @@ class Maze {
         this._solveTime = null;
     }
     /****************************************\
+                 Getters/Setters
+    \****************************************/
+    get width() {
+        return this._width;
+    }
+    get height() {
+        return this._height;
+    }
+    get startNode() {
+        return this._start;
+    }
+    get endNode() {
+        return this._end;
+    }
+    /****************************************\
                 Initialise Methods
     \****************************************/
     initialiseMaze(w, h,startend=null) {
         this.handleEvent(this._onBeforeInitialise);
         performance.mark("start");
-        this.width = w || this.width;
-        this.height = h || this.height;
+        this._width = w || this._width;
+        this._height = h || this._height;
         this.startend = startend || this.startend;
         this.graph = new Array(this.width);
         let startPos, endPos;
@@ -46,10 +61,10 @@ class Maze {
             for (var j = 0; j < this.height; ++j) {
                 let node = new Node(i, j);
                 if (j == startPos[1] && i == startPos[0]) {
-                    this.start = node;
+                    this._start = node;
                 }
                 if (j == endPos[1] && i == endPos[0]) {
-                    this.end = node;
+                    this._end = node;
                 }
                 if (j == 0) { node.setTop(0); }
                 if (i == this.width-1) { node.setRight(0); }
@@ -211,12 +226,6 @@ class Maze {
     /****************************************\
                     Node Methods
     \****************************************/
-    getStart() {
-        return this.start;
-    }
-    getEnd() {
-        return this.end;
-    }
     getNode(x, y) {
         if (x < 0 || x >= this.width) {
             return null;
@@ -228,18 +237,12 @@ class Maze {
     }
     getNodes() {
         var nodes = [];
-        for (var i = 0; i < this.getWidth(); ++i) {
-            for (var j = 0; j < this.getHeight(); ++j) {
+        for (var i = 0; i < this.width; ++i) {
+            for (var j = 0; j < this.height; ++j) {
                 nodes.push(this.getNode(i, j));
             }
         }
         return nodes;
-    }
-    getHeight() {
-        return this.height;
-    }
-    getWidth() {
-        return this.width;
     }
     /****************************************\
                   Event Methods
@@ -481,6 +484,24 @@ class MazeAlgorithm {
         this._solverUpdates = 0;
         this._solverVisits = 0;
     }
+    //Getters
+    get height() {
+        return this.maze.height;
+    }
+    get width() {
+        return this.maze.width;
+    }
+    get area() {
+        return this.maze.width * this.maze.height;
+    }
+    get startNode() {
+        return this.maze.startNode;
+    }
+    get endNode() {
+        return this.maze.endNode;
+    }
+
+    //Generation Methods
     beforeGenerate() {}
     afterGenerate() {}
     generationDescription() {
@@ -489,6 +510,8 @@ class MazeAlgorithm {
     generationOptions() {
         return [];
     }
+
+    //Solution Methods
     beforeSolve() {}
     afterSolve() {}
     solutionDescription() {
@@ -497,7 +520,10 @@ class MazeAlgorithm {
     solutionOptions() {
         return [];
     }
-    pickRandom(array, remove) {
+
+    //Helper Methods
+    //Pick a random entry from the passed array (and remove if required)
+    pickRandom(array, remove=false) {
         var r = Math.random();
         for (var i = 0; i < array.length; ++i) {
             if (r >= i / array.length && r < (i + 1) / array.length) {
@@ -520,6 +546,7 @@ class MazeAlgorithm {
             }
         }
     }
+    //Connect the two nodes by removing the wall between them
     joinNeighbours(node1, node2) {
         //Moving Up or Down
         if (node1.getX() == node2.getX()) {
@@ -544,6 +571,15 @@ class MazeAlgorithm {
             }
         }
     }
+    //Get the neighbours of the passed cell
+    //If connected == null -> get all neighbours
+    //If connected == true -> only get joined nodes (no wall in between)
+    //If connected == false -> only get non-joined nodes (wall in between)
+    //if includeWalls == false -> do not include wall nodes
+    //If includeWalls == true -> include nodes that have walls in between (if connected == true, adds null instead of node)
+    //If visited == null -> include all neighbours
+    //if visited == true -> only include visited neighbours
+    //if visited == false -> only include non-visited neighbours
     getNeighbours(node, { connected = null, includeWalls = false, visited = null } = {}) {
         function areConnected(node1, node2) {
             if (node1.getLeft() == node2) return true;
@@ -581,7 +617,7 @@ class MazeAlgorithm {
         else if (includeWalls) {
             neighbours.push(null);
         }
-        if (x != this.maze.getWidth() - 1) {
+        if (x != this.width - 1) {
             var neighbour = this.maze.getNode(x + 1, y);
             if (checkVisited(neighbour) && checkConnected(neighbour)) {
                 neighbours.push(neighbour);
@@ -595,7 +631,7 @@ class MazeAlgorithm {
         else if (includeWalls) {
             neighbours.push(null);
         }
-        if (y != this.maze.getHeight() - 1) {
+        if (y != this.height - 1) {
             var neighbour = this.maze.getNode(x, y + 1);
             if (checkVisited(neighbour) && checkConnected(neighbour)) {
                 neighbours.push(neighbour);
@@ -625,6 +661,8 @@ class MazeAlgorithm {
         }
         return neighbours;
     }
+
+    //Data methods
     setGenerationUpdates(value) {
         this._generatorUpdates = value;
     }
@@ -656,12 +694,12 @@ class AldousBroder extends MazeAlgorithm {
             + "</ul>";
     }
     generateMaze() {
-        var remaining = this.maze.getWidth() * this.maze.getHeight() - 1;
-        var node = this.pickRandom(this.maze.getNodes());
-        node.visit();
+        var remaining = this.area - 1; //Minus 1 for the start node
+        var node = this.pickRandom(this.maze.getNodes()); //Get any random node from the maze
         while (remaining > 0) {
+            node.visit();
             let neighbours = this.getNeighbours(node);
-            var next = this.pickRandom(neighbours);
+            var next = this.pickRandom(neighbours); //Get any random neighbour and go there
             if (!next.visited()) {
                 remaining--;
                 this.joinNeighbours(node, next);
@@ -670,7 +708,6 @@ class AldousBroder extends MazeAlgorithm {
                 //Unvisit the node so that the GUI is forced to update when revisiting already visited cells
                 next.unVisit();
             }
-            next.visit();
             node = next;
         }
     }
@@ -697,12 +734,10 @@ class AStar extends MazeAlgorithm {
         return node.g + node.h;
     }
     solveMaze(options) {
-        var start = this.maze.getStart();
-        var end = this.maze.getEnd();
-        var open = [start];
-        start.g = 0;
-        start.h = this.calculate(start, end);
-        start.setSet(this.calculateF(start));
+        var open = [this.startNode];
+        this.startNode.g = 0;
+        this.startNode.h = this.calculate(this.startNode, this.endNode);
+        this.startNode.setSet(this.calculateF(this.startNode));
         var closed = [];
         while (open.length > 0) {
             // Grab the lowest f(x) to process next
@@ -718,7 +753,7 @@ class AStar extends MazeAlgorithm {
                 }
             }
             // End case -- result has been found, return the traced path
-            if (node == end) {
+            if (node == this.endNode) {
                 var path = [node];
                 while (node.parent != null) {
                     node = node.parent;
@@ -754,7 +789,7 @@ class AStar extends MazeAlgorithm {
                     // This the the first time we have arrived at this node, it must be the best
                     // Also, we need to take the h (heuristic) score since we haven't done so yet
                     gScoreIsBest = true;
-                    neighbour.h = this.calculate(node, end);
+                    neighbour.h = this.calculate(node, this.endNode);
                     open.push(neighbour);
                 }
                 else if(gScore < neighbour.g) {
@@ -788,15 +823,13 @@ class BFS extends MazeAlgorithm {
             + "</ul>";
     }
     solveMaze(options) {
-        var start = this.maze.getStart();
-        var end = this.maze.getEnd();
-        var toSearch = [start];
-        var paths = [[start]];
+        var toSearch = [this.startNode];//Queue of nodes to search. First in first out queue
+        var paths = [[this.startNode]];//Array of all possible paths from the start node
         while (toSearch.length > 0) {
-            var node = toSearch.shift();
-            var path = paths.shift();
+            var node = toSearch.shift();//Get first node in queue
+            var path = paths.shift();//The path of the first node in the queue
             node.visit();
-            if (node == end) {
+            if (node == this.endNode) {
                 path.push(node);
                 for (var i = 0; i < path.length; ++i) {
                     path[i].setPathLength(i);
@@ -806,10 +839,11 @@ class BFS extends MazeAlgorithm {
             let neighbours = this.getNeighbours(node, { connected: true });
             for (var i = 0; i < neighbours.length; ++i) {
                 if (!neighbours[i].visited()) {
+                    //Copy the path because you will probably be pushing different version of it multiple times
                     var p = path.slice();
                     p.push(neighbours[i]);
-                    paths.push(p);
-                    toSearch.push(neighbours[i]);
+                    paths.push(p);//Add new path to the end of the path array
+                    toSearch.push(neighbours[i]);//Add the node to the end of the queue
                 }
             }
         }
@@ -828,8 +862,13 @@ class DFS extends MazeAlgorithm {
             + "<li>When all cells are visited (backtracked to start node) the maze is complete</li>"
             + "</ul>";
     }
+    //As this is implemented as a loop rather than recursively
+    //It remembers which node is next using an array of nodes
+    //If the node you are currently visiting has no viable neighbours (unconnected), remove it from the array
+    //The loop continues from the previous node
+    //Eventually there will be no nodes in the array
     generateMaze(options) {
-        var path = [this.maze.getStart()];
+        var path = [this.startNode];
         while (path.length > 0) {
             var node = path[path.length - 1];
             node.visit();
@@ -860,6 +899,8 @@ class DFS extends MazeAlgorithm {
             + "For mazes this means that if there is the option of Left or Right, the algorithm will be programed to always go left until its options have been exhausted before returning to search the right side<br/><br/>"
             + "You can choose the bias in the bias text field above: T -> Top, R -> Right, B -> Bottom, L -> Left"
     }
+    //As the maze will always be solved with a bias towards the left, right, top or bottom
+    //This option allows you choose the bias
     solutionOptions() {
         return [
             {
@@ -885,10 +926,15 @@ class DFS extends MazeAlgorithm {
             }
         ];
     }
+    //As this is implemented as a loop rather than recursively
+    //It remembers which node is next using an array of nodes
+    //If the node you are currently visiting has no viable neighbours (unconnected), remove it from the array
+    //The loop continues from the previous node
+    //Eventually it will reach the end of the maze
+    //The path from the start to the end is then left in the array
     solveMaze(options) {
         let mapping = { "L": 0, "R": 1, "B": 2, "T": 3 };
-        let end = this.maze.getEnd();
-        var path = [this.maze.getStart()];
+        var path = [this.startNode];
         while (path.length > 0) {
             var node = path[path.length - 1];
             node.visit();
@@ -896,7 +942,7 @@ class DFS extends MazeAlgorithm {
                 path.splice(path.indexOf(node));
             }
             path.push(node);
-            if (node == end) {
+            if (node == this.endNode) {
                 for (var i = 0; i < path.length; ++i) {
                     path[i].setPathLength(i);
                 }
@@ -944,6 +990,10 @@ class DFSPRIM extends MazeAlgorithm {
             + "<li>Otherwise restart loop from neighbour</li>"
             + "</ul>";
     }
+    //This changes how often it will choose a random node rather then match a DFS algorithm
+    //If the DFS algorithm gets stuck it will always choose a random node
+    //100 makes this behave the same as the PRIM algorithm
+    //0 makes this behave close to the same as DFS
     generationOptions() {
         return [
             {
@@ -957,8 +1007,10 @@ class DFSPRIM extends MazeAlgorithm {
         ]
     }
     generateMaze(options) {
-        var node = this.maze.getStart();
+        var node = this.startNode;
         var selectRandom = (100 - options["selectRandom"]) / 100;
+        //The frontier is a list of nodes that are adjacent to nodes NOT in the maze
+        //The "random" node is taken from this list. So a random node is not truely random accross the whole maze
         var frontier = [node];
         while (frontier.length > 0) {
             var neighbours = this.getNeighbours(node, { visited: false });
@@ -992,12 +1044,18 @@ class DFSPRIM extends MazeAlgorithm {
     }
 }
 
-//Used for Eller's Algorithm to keep track of and merge groups of cells
-class Sets {
+//Used for Eller's and Kruskal's Algorithms to keep track of and merge groups of nodes
+class SetManager {
     constructor() {
         this.sets = {};
     }
-    push(node, set) {
+    push(node, set=null) {
+        if (set == null) {
+            set = 0;
+            while (set in this.sets) {
+                set++;
+            }
+        }
         node.setSet(set);
         if (!(set in this.sets)) {
             this.sets[set] = [];
@@ -1019,6 +1077,7 @@ class Sets {
         }
         return nodesAt;
     }
+    //Merge two different sets together and remove one
     merge(leftNode, rightNode) {
         var newset = leftNode.getSet();
         var oldset = rightNode.getSet();
@@ -1026,6 +1085,8 @@ class Sets {
             return false;
         }
         var mergeok = true;
+        //If the "left" set is larger than the "right" set,
+        //Merge the "right" set into the "left" set instead
         if (this.sets[oldset].length > this.sets[newset].length) {
             let temp = newset;
             newset = oldset;
@@ -1040,10 +1101,12 @@ class Sets {
                 this.sets[newset].push(node);
                 node.setSet(newset);
             }
-            delete this.sets[oldset];
+            delete this.sets[oldset];//Set is empty no longer needed
         }
         return mergeok;
     }
+    //Make looping through sets possible
+    //If a set is deleted during the looping process, it will be handled
     [Symbol.iterator]() {
         var _this = this;
         var keys = Object.keys(this.sets);
@@ -1058,6 +1121,8 @@ class Sets {
                     }
                     value = _this.sets[cur];
                 }
+                //To me setting done=true should be done when its the last loop item,
+                //However, you pass in done=true when you have run out of items
                 return {
                     value: value,
                     done: done
@@ -1081,6 +1146,7 @@ class Eller extends MazeAlgorithm {
             + "<li>For the last row, join all adjacent nodes that are not already part of the same collection</li>"
             + "</ul>";
     }
+    //You can change how often it will merge cells horizontally and vertically
     generationOptions() {
         return [
             {
@@ -1102,28 +1168,33 @@ class Eller extends MazeAlgorithm {
         ]
     }
     generateMaze(options) {
-        var sets = new Sets();
+        var sets = new SetManager();
         var setCounter = 0;
         var horizontalMerge = options["horizontalMerge"] / 100 || 0.7;
         var verticalMerge = options["verticalMerge"] / 100 || 0.3;
-        for (var j = 0; j < this.maze.getHeight(); ++j) {
-            for (var i = 0; i < this.maze.getWidth(); ++i) {
+        for (var j = 0; j < this.height; ++j) {
+            //If node is not visited, then add it to the set manager
+            for (var i = 0; i < this.width; ++i) {
                 var node = this.maze.getNode(i, j);
                 if (!node.visited()) {
                     sets.push(node, setCounter++);
                     node.visit();
                 }
             }
-            for (var i = 0; i < this.maze.getWidth() - 1; ++i) {
+            //For each node horizontally, randomly merge
+            //In the last row, always merge if in different sets
+            for (var i = 0; i < this.width - 1; ++i) {
                 var leftNode = this.maze.getNode(i, j);
                 var rightNode = this.maze.getNode(i + 1, j);
-                if (Math.random() < horizontalMerge || j == this.maze.getHeight() - 1) {
+                if (Math.random() < horizontalMerge || j == this.height - 1) {
                     if (sets.merge(leftNode, rightNode)) {
                         this.joinNeighbours(leftNode, rightNode);
                     }
                 }
             }
-            if (j < this.maze.getHeight() - 1) {
+            //For all rows but the last row
+            //Randomly merge downwards.  Each set MUST merge downwards once
+            if (j < this.height - 1) {
                 for (var set of sets) {
                     var nodes = sets.getNodesFromSetAtHeight(set, j);
                     var vertical = false;
@@ -1136,6 +1207,8 @@ class Eller extends MazeAlgorithm {
                                 this.joinNeighbours(topNode, bottomNode);
                                 bottomNode.visit();
                                 vertical = true;
+                                //If the set has already been looped through without merging
+                                //As soon as it merges once, stop the loop
                                 if (nth) {
                                     break;
                                 }
@@ -1163,75 +1236,36 @@ class Kruskal extends MazeAlgorithm {
     }
     generateMaze() {
         var walls = [];
-        var sets = [];
-        for (var i = 0; i < this.maze.getWidth(); ++i) {
-            for (var j = 0; j < this.maze.getHeight(); ++j) {
+        var sets = new SetManager();
+        //Add add the walls to the walls array
+        //Add all nodes as sets
+        for (var i = 0; i < this.width; ++i) {
+            for (var j = 0; j < this.height; ++j) {
                 var node = this.maze.getNode(i, j);
-                if (node.getX()+1 < this.maze.getWidth()) {
+                if (node.getX() + 1 < this.width) {
                     walls.push({
                         node1: node,
-                        node2: this.maze.getNode(i+1, j)
+                        node2: this.maze.getNode(i + 1, j)
                     });
                 }
-                if (node.getY()+1 < this.maze.getHeight()) {
+                if (node.getY() + 1 < this.height) {
                     walls.push({
                         node1: node,
-                        node2: this.maze.getNode(i, j+1)
+                        node2: this.maze.getNode(i, j + 1)
                     });
                 }
-                sets.push([node]);
+                sets.push(node);
             }
         }
         while (walls.length > 0) {
-            var wall = this.pickRandom(walls, true);
-            var joinSets = true;
-            var set1 = null;
-            var set2 = null;
-            for (var i = 0; i < sets.length; ++i) {
-                for (var j = 0; j < sets[i].length; ++j) {
-                    if (sets[i][j] == wall["node1"]) {
-                        set1 = sets[i];
-                        for (var k = 0; k < sets[i].length; ++k) {
-                            if (sets[i][k] == wall["node2"]) {
-                                joinSets = false;
-                                break;
-                            }
-                        }
-                    }
-                    if (sets[i][j] == wall["node2"]) {
-                        set2 = sets[i];
-                    }
-                }
-            }
-            if (joinSets) {
-                var i = sets.indexOf(set2);
-                sets.splice(i, 1);
-                for (var i = 0; i < set2.length; ++i) {
-                    set1.push(set2[i]);
-                }
-                wall["node1"].visit();
-                wall["node2"].visit();
-                if (wall["node1"].getX() == wall["node2"].getX()) {
-                    if (wall["node1"].getY() < wall["node2"].getY()) {
-                        wall["node1"].setBottom(wall["node2"]);
-                        wall["node2"].setTop(wall["node1"]);
-                    }
-                    else {
-                        wall["node1"].setTop(wall["node2"]);
-                        wall["node2"].setBottom(wall["node1"]);
-                    }
-                }
-                else {
-                    if (wall["node1"].getX() > wall["node2"].getX()) {
-                        wall["node1"].setLeft(wall["node2"]);
-                        wall["node2"].setRight(wall["node1"]);
-                    }
-                    else {
-                        wall["node1"].setRight(wall["node2"]);
-                        wall["node2"].setLeft(wall["node1"]);
-                    }
-                }
-                
+            //Remove a random wall from the wall list
+            var { node1, node2 } = this.pickRandom(walls, true);
+            //Attempt to join the nodes (remove wall)
+            if (sets.merge(node1, node2)) {
+                //If successful, join the neighbours
+                node1.visit();
+                node2.visit();
+                this.joinNeighbours(node2, node1);
             }
         }
     }
@@ -1248,88 +1282,56 @@ class PRIM extends MazeAlgorithm {
             + "<li>Add the nodes walls to the wall list</li>"
             + "</ul>";
     }
-    generateMaze(options) {
-        var walls = [];
-        function addWalls(maze, node) {
-            if (node !== null) {
-                if (node.getTop() !== 0) {
-                    if (node.getY()-1 >= 0) {
-                        walls.push({
-                            x:node.getX(),
-                            y:node.getY(),
-                            pos: "top"
-                        });
-                    }
+    getWalls(node) {
+        var newWalls = [];
+        if (node !== null) {
+            if (node.getTop() !== 0) {
+                if (node.getY() - 1 >= 0) {
+                    newWalls.push({
+                        node1: node,
+                        node2: this.maze.getNode(node.getX(), node.getY() - 1)
+                    });
                 }
-                if (node.getRight() !== 0) {
-                    if (node.getX()+1 < maze.getWidth()) {
-                        walls.push({
-                            x:node.getX(),
-                            y:node.getY(),
-                            pos: "right"
-                        });
-                    }
+            }
+            if (node.getRight() !== 0) {
+                if (node.getX() + 1 < this.width) {
+                    newWalls.push({
+                        node1: node,
+                        node2: this.maze.getNode(node.getX() + 1, node.getY())
+                    });
                 }
-                if (node.getBottom() !== 0) {
-                    if (node.getY()+1 < maze.getHeight()) {
-                        walls.push({
-                            x:node.getX(),
-                            y:node.getY(),
-                            pos: "bottom"
-                        });
-                    }
+            }
+            if (node.getBottom() !== 0) {
+                if (node.getY() + 1 < this.height) {
+                    newWalls.push({
+                        node1: node,
+                        node2: this.maze.getNode(node.getX(), node.getY() + 1)
+                    });
                 }
-                if (node.getTop() !== 0) {
-                    if (node.getX()-1 >= 0) {
-                        walls.push({
-                            x:node.getX(),
-                            y:node.getY(),
-                            pos: "left"
-                        });
-                    }
+            }
+            if (node.getTop() !== 0) {
+                if (node.getX() - 1 >= 0) {
+                    newWalls.push({
+                        node1: node,
+                        node2: this.maze.getNode(node.getX() - 1, node.getY())
+                    });
                 }
-                node.visit();
             }
         }
-        addWalls(this.maze, this.maze.getStart());
+        return newWalls;
+    }
+    generateMaze(options) {
+        //Add the walls of the start node to the wall list
+        var walls = [...this.getWalls(this.startNode)];
+        this.startNode.visit();
         while (walls.length > 0) {
-            var newnode = this.pickRandom(walls, true);
-            var node1 = this.maze.getNode(newnode.x, newnode.y);
-            var node2;
-            switch (newnode.pos) {
-                case "left":
-                    node2 = this.maze.getNode(newnode.x - 1, newnode.y);
-                    break;
-                case "right":
-                    node2 = this.maze.getNode(newnode.x + 1, newnode.y);
-                    break;
-                case "bottom":
-                    node2 = this.maze.getNode(newnode.x, newnode.y + 1);
-                    break;
-                case "top":
-                    node2 = this.maze.getNode(newnode.x, newnode.y - 1);
-                    break;
-            }
+            //Randomly remove a set of walls and get the nodes
+            var { node1, node2 } = this.pickRandom(walls, true);
+            //If one has been visited, then merge them and add the unvisited nodes walls to the wall list
             if (node1.visited() && !node2.visited()) {
-                switch (newnode.pos) {
-                    case "left":
-                        node1.setLeft(node2);
-                        node2.setRight(node1);
-                        break;
-                    case "right":
-                        node1.setRight(node2)
-                        node2.setLeft(node1)
-                        break;
-                    case "bottom":
-                        node1.setBottom(node2)
-                        node2.setTop(node1)
-                        break;
-                    case "top":
-                        node1.setTop(node2)
-                        node2.setBottom(node1)
-                        break;
-                }
-                addWalls(this.maze, node2);
+                this.joinNeighbours(node1, node2);
+                walls.push(...this.getWalls(node2));
+                node2.visit();
             }
         }
     }
@@ -1348,95 +1350,107 @@ class RecursiveDivision extends MazeAlgorithm {
             + "<li>If either area has a width or height less than 2, then stop bisecting it</li>"
             + "</ul>"
     }
+    //Recursive division starts with allnodes connected
     beforeGenerate() {
-        for (var j = 0; j < this.maze.getHeight(); ++j) {
-            for (var i = 0; i < this.maze.getWidth(); ++i) {
+        for (var j = 0; j < this.height; ++j) {
+            for (var i = 0; i < this.width; ++i) {
                 if (i != 0) {
                     this.joinNeighbours(this.maze.getNode(i, j), this.maze.getNode(i - 1, j));
-                    this.maze.getNode(i - 1, j).reset();
+                    this.maze.getNode(i - 1, j).reset(); //Reset the update counter
                 }
                 if (j != 0) {
                     this.joinNeighbours(this.maze.getNode(i, j), this.maze.getNode(i, j - 1));
                     this.maze.getNode(i, j-1).reset();
                 }
-                this.maze.getNode(i, j).reset();
+                this.maze.getNode(i, j).reset(); //Reset the update counter
             }
         }
     }
-    split(left, top, right, bottom) {
-        var width = Math.abs(right - left);
-        var height = Math.abs(bottom - top);
+    //Based on the passed in coords, split the area it makes
+    split(x1, y1, x2, y2) {
+        var width = Math.abs(x2 - x1);
+        var height = Math.abs(y2 - y1);
         if (height < 2 || width < 2) {
             return [];
         }
         var division = null;
+        //If the area is wider than it is tall -> split vertically
         if (width > height) {
             division = "verticle";
         }
+        //If the area is taller than it is wide -> split horizontally
         else if (height > width) {
             division = "horizontal";
         }
+        //If its a square choose a random direction
         else {
             division = this.pickRandom(["verticle", "horizontal"]);
         }
+        //Set the x or y location of the split
         if (division == "horizontal") {
-            var y = top + Math.floor(Math.random() * (height - 2));
+            var y = y1 + Math.floor(Math.random() * (height - 2));
             return [{
-                "left": left,
-                "top": top,
-                "right": right,
-                "bottom": bottom,
-                "direction": "y",
+                "left": x1,
+                "top": y1,
+                "right": x2,
+                "bottom": y2,
+                "direction": division,
                 "position": y
             }];
         }
         else {
-            var x = left + Math.floor(Math.random() * (width - 2));
+            var x = x1 + Math.floor(Math.random() * (width - 2));
             return [{
-                "left": left,
-                "top": top,
-                "right": right,
-                "bottom": bottom,
-                "direction": "x",
+                "left": x1,
+                "top": y1,
+                "right": x2,
+                "bottom": y2,
+                "direction": division,
                 "position": x
             }];
         }
     }
     generateMaze() {
-        let areas = this.split(0, 0, this.maze.getWidth(), this.maze.getHeight());
+        let areas = this.split(0, 0, this.width, this.height);
+        //While there are areas to split
         while (areas.length > 0) {
+            //Get an area from the area list
             let area = areas.splice(0, 1)[0];
-            switch (area["direction"]) {
-                case "x":
-                    var arr = new Array(Math.abs(area["bottom"] - area["top"])).fill().map((_, i) => area["top"] + i);
-                    var skip = this.pickRandom(arr);
-                    for (var i = area["top"]; i < area["bottom"]; ++i) {
-                        if (i == skip) {
-                            continue;
-                        }
-                        var node1 = this.maze.getNode(area["position"], i);
-                        var node2 = this.maze.getNode(area["position"] + 1, i);
-                        node1.setRight(null);
-                        node2.setLeft(null);
+            if (area["direction"] == "verticle") {
+                //Choose a random location to leave the wall open. Choose a random place from an array with index numbers
+                var arr = new Array(Math.abs(area["bottom"] - area["top"])).fill().map((_, i) => area["top"] + i);
+                var skip = this.pickRandom(arr);
+                for (var i = area["top"]; i < area["bottom"]; ++i) {
+                    if (i == skip) {//The random height to leave open
+                        continue;
                     }
-                    areas.splice(0, 0, ...this.split(area["position"] + 1, area["top"], area["right"], area["bottom"]));
-                    areas.splice(0, 0, ...this.split(area["left"], area["top"], area["position"] + 1, area["bottom"]));
-                    break;
-                case "y":
-                    var arr = new Array(Math.abs(area["right"] - area["left"])).fill().map((_, i) => area["left"] + i);
-                    var skip = this.pickRandom(arr);
-                    for (var i = area["left"]; i < area["right"]; ++i) {
-                        if (i == skip) {
-                            continue;
-                        }
-                        var node1 = this.maze.getNode(i, area["position"]);
-                        var node2 = this.maze.getNode(i, area["position"] + 1);
-                        node1.setBottom(null);
-                        node2.setTop(null);
+                    var node1 = this.maze.getNode(area["position"], i);
+                    var node2 = this.maze.getNode(area["position"] + 1, i);
+                    //Remove the walls between the two nodes
+                    node1.setRight(null);
+                    node2.setLeft(null);
+                }
+                //Add the subsections to the areas array (at the beginining)
+                areas.splice(0, 0, ...this.split(area["position"] + 1, area["top"], area["right"], area["bottom"]));
+                areas.splice(0, 0, ...this.split(area["left"], area["top"], area["position"] + 1, area["bottom"]));
+            }
+            else {
+                //Choose a random location to leave the wall open. Choose a random place from an array with index numbers
+                var arr = new Array(Math.abs(area["right"] - area["left"])).fill().map((_, i) => area["left"] + i);
+                var skip = this.pickRandom(arr);
+                for (var i = area["left"]; i < area["right"]; ++i) {
+                    if (i == skip) {//The random height to leave open
+                        continue;
                     }
-                    areas.splice(0, 0, ...this.split(area["left"], area["position"] + 1, area["right"], area["bottom"]));
-                    areas.splice(0, 0, ...this.split(area["left"], area["top"], area["right"], area["position"] + 1));
-                    break;
+                    var node1 = this.maze.getNode(i, area["position"]);
+                    var node2 = this.maze.getNode(i, area["position"] + 1);
+                    //Remove the walls between the two nodes
+                    node1.setBottom(null);
+                    node2.setTop(null);
+                }
+                //Add the subsections to the areas array (at the beginining)
+                areas.splice(0, 0, ...this.split(area["left"], area["position"] + 1, area["right"], area["bottom"]));
+                areas.splice(0, 0, ...this.split(area["left"], area["top"], area["right"], area["position"] + 1));
             }
         }
     }
@@ -1451,6 +1465,7 @@ class WallFollower extends MazeAlgorithm {
             + "In the begining, the 'person' in the maze is facing south, so left/right is reversed<br/>"
             + "Each time it turns, keep track of the direction the 'person' is facing so you always choose their left<br/>"
     }
+    //You can follow the right wall or left wall
     solutionOptions() {
         return [
             {
@@ -1465,19 +1480,24 @@ class WallFollower extends MazeAlgorithm {
         ];
     }
     solveMaze(options) {
-        var node = this.maze.getStart();
-        var end = this.maze.getEnd();
+        var node = this.startNode;
         var path = [];
+        //These mazes are either from top to bottom or left to right
+        //Therefore the direction the imaginary person is facing is:
+        //Top to Bottom: South
+        //Left to Right: East
         var direction = "S";
         if (node.getY() != 0) {
             direction = "E";
         }
+        //For each direction this is a map of turning left
         var directionToNum = {
             "N": [4, 1, 2, 3],
             "E": [1, 2, 3, 4],
             "S": [2, 3, 4, 1],
             "W": [3, 4, 1, 2]
         };
+        //firection for turning rght
         if ("wallToFollow" in options && options["wallToFollow"] == "right") {
             directionToNum = {
                 "N": [2, 1, 4, 3],
@@ -1486,12 +1506,14 @@ class WallFollower extends MazeAlgorithm {
                 "W": [1, 4, 3, 2]
             };
         }
+        //Conversion of numbers to directions
         var numToDirection = {
             1: "N",
             2: "E",
             3: "S",
             4: "W"
         }
+        //Conversion of numbers to node methods to call
         var directions = {
             1: { "has": "hasTop",       "get": "getTop"    },
             2: { "has": "hasRight",     "get": "getRight"  },
@@ -1499,17 +1521,22 @@ class WallFollower extends MazeAlgorithm {
             4: { "has": "hasLeft",      "get": "getLeft"    }
         };
         while (true) {
+            //If node is in the path already, we must have backtracked somewhere
+            //Remove from path
             var index = path.indexOf(node);
             if (index >= 0) {
                 path.splice(index);
             }
             path.push(node);
             node.visit();
-            if (node == end) {
+            //We found the end! break
+            if (node == this.endNode) {
                 break;
             }
+            //Get the possible turns
             var conv = directionToNum[direction];
             for (var i of conv) {
+                //Take the first possible available turn
                 if (node[directions[i]["has"]]()) {
                     node = node[directions[i]["get"]]();
                     direction = numToDirection[i];
@@ -1537,6 +1564,7 @@ class Wilson extends MazeAlgorithm {
             + "<li>Repeat until all nodes are in the maze</li>"
             + "</ul>";
     }
+    //Where to choose the next node from
     generationOptions() {
         return [
             {
@@ -1558,16 +1586,15 @@ class Wilson extends MazeAlgorithm {
         ];
     }
     getNextNode(options, remaining) {
+        //If random pick random
         if (!("nextNode" in options) || options["nextNode"] == "random") {
            return this.pickRandom(remaining, false);
         }
-        var width = this.maze.getWidth();
-        var height = this.maze.getHeight();
         //Improve selection algorithm? remember previously selected to start loop from
         switch (options["nextNode"]) {
             case "topl2r":
-                for (var i = 0; i < height; ++i) {
-                    for (var j = 0; j < width; ++j) {
+                for (var i = 0; i < this.height; ++i) {
+                    for (var j = 0; j < this.width; ++j) {
                         if (!this.maze.getNode(j, i).visited()) {
                             return this.maze.getNode(j, i);
                         }
@@ -1575,8 +1602,8 @@ class Wilson extends MazeAlgorithm {
                 }
                 break;
             case "topr2l":
-                for (var i = 0; i < height; ++i) {
-                    for (var j = width - 1; j >= 0 ; --j) {
+                for (var i = 0; i < this.height; ++i) {
+                    for (var j = this.width - 1; j >= 0 ; --j) {
                         if (!this.maze.getNode(j, i).visited()) {
                             return this.maze.getNode(j, i);
                         }
@@ -1584,8 +1611,8 @@ class Wilson extends MazeAlgorithm {
                 }
                 break;
             case "leftt2b":
-                for (var j = 0; j < width; ++j) {
-                    for (var i = 0; i < height; ++i) {
+                for (var j = 0; j < this.width; ++j) {
+                    for (var i = 0; i < this.height; ++i) {
                         if (!this.maze.getNode(j, i).visited()) {
                             return this.maze.getNode(j, i);
                         }
@@ -1593,8 +1620,8 @@ class Wilson extends MazeAlgorithm {
                 }
                 break;
             case "rightt2b":
-                for (var j = width - 1; j >= 0 ; --j) {
-                    for (var i = 0; i < height; ++i) {
+                for (var j = this.width - 1; j >= 0 ; --j) {
+                    for (var i = 0; i < this.height; ++i) {
                         if (!this.maze.getNode(j, i).visited()) {
                             return this.maze.getNode(j, i);
                         }
@@ -1602,8 +1629,8 @@ class Wilson extends MazeAlgorithm {
                 }
                 break;
             case "bottoml2r":
-                for (var i = height - 1; i >= 0 ; --i) {
-                    for (var j = 0; j < width; ++j) {
+                for (var i = this.height - 1; i >= 0 ; --i) {
+                    for (var j = 0; j < this.width; ++j) {
                         if (!this.maze.getNode(j, i).visited()) {
                             return this.maze.getNode(j, i);
                         }
@@ -1611,8 +1638,8 @@ class Wilson extends MazeAlgorithm {
                 }
                 break;
             case "bottomr2l":
-                for (var i = height - 1; i >= 0 ; --i) {
-                    for (var j = width - 1; j >= 0 ; --j) {
+                for (var i = this.height - 1; i >= 0 ; --i) {
+                    for (var j = this.width - 1; j >= 0 ; --j) {
                         if (!this.maze.getNode(j, i).visited()) {
                             return this.maze.getNode(j, i);
                         }
@@ -1620,8 +1647,8 @@ class Wilson extends MazeAlgorithm {
                 }
                 break;
             case "leftb2t":
-                for (var j = 0; j < width; ++j) {
-                    for (var i = height - 1; i >= 0 ; --i) {
+                for (var j = 0; j < this.width; ++j) {
+                    for (var i = this.height - 1; i >= 0 ; --i) {
                         if (!this.maze.getNode(j, i).visited()) {
                             return this.maze.getNode(j, i);
                         }
@@ -1629,8 +1656,8 @@ class Wilson extends MazeAlgorithm {
                 }
                 break;
             case "rightb2t":
-                for (var j = width - 1; j >= 0 ; --j) {
-                    for (var i = height - 1; i >= 0 ; --i) {
+                for (var j = this.width - 1; j >= 0 ; --j) {
+                    for (var i = this.height - 1; i >= 0 ; --i) {
                         if (!this.maze.getNode(j, i).visited()) {
                             return this.maze.getNode(j, i);
                         }
@@ -1640,17 +1667,21 @@ class Wilson extends MazeAlgorithm {
         }
     }
     generateMaze(options) {
+        //get a list of all nodes
         var remaining = this.maze.getNodes();
+        //get the next node. It will be added to the maze and removed from remaining
         let node = this.getNextNode(options, remaining);
         remaining.splice(remaining.indexOf(node), 1);
         node.visit();
         var path = [];
         while (remaining.length > 0) {
             if (path.length == 0) {
+                //When we have just added the last random path to the maze, we need a new random node
                 let startPath = this.getNextNode(options, remaining);
                 path.push(startPath);
                 startPath.inNextPath();
             }
+            //Get the last node from the path, and continue walking from it
             let walkNode = path[path.length - 1];
             let neighbours = this.getNeighbours(walkNode);
             //Not sure if this helps, but remove the previous node from the possible next nodes
@@ -1660,14 +1691,17 @@ class Wilson extends MazeAlgorithm {
                     neighbours.splice(neighbours.indexOf(previousWalkNode), 1);
                 }
             }
+            //Randomly pick the next node
             let nextNode = this.pickRandom(neighbours);
             let pos = path.indexOf(nextNode);
+            //If the next node is in the path, remove all items in the path after it
             if (pos >= 0) {
                 let removed = path.splice(pos + 1);
                 for (var i = 0; i < removed.length; ++i) {
                     removed[i].resetNextPath();
                 }
             }
+            //If the next node is part of the maze, add the entire path to the maze in the order it was added to the path
             else if (nextNode.visited()) {
                 var previous = nextNode;
                 for (var i = path.length - 1; i >= 0; i--) {
@@ -1680,6 +1714,7 @@ class Wilson extends MazeAlgorithm {
                 }
                 path = [];
             }
+            //If the next item is not in the path or maze, add it to the path and continue
             else {
                 path.push(nextNode);
                 nextNode.inNextPath();
