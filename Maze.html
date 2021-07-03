@@ -270,10 +270,10 @@
             function draw(maze, $maze, node) {
                 if (drawing) {
                     //Something is still drawing, add the next item to the queue
-                    if (node != null && queue.length > 0) {
+                    if (node != null && !Array.isArray(node) && queue.length > 0) {
                         //If the previously added item in the queue is the same as the new item, update the previous
                         var previous = queue[queue.length - 1];
-                        if (previous.getX() == node.getX() &&
+                        if (previous != null && !Array.isArray(previous) && previous.getX() == node.getX() &&
                             previous.getY() == node.getY()) {
                             queue[queue.length - 1] = node;
                             return;
@@ -370,6 +370,11 @@
                             $maze.append($("<div>").attr("data-linebreak", "true").css("display", "block"));
                     }
                 }
+                else if (Array.isArray(node)) {
+                    for (var j = 0; j < node.length; j++) {
+                        drawCell(node[j], false);
+                    }
+                }
                 else {
                     drawCell(node, true);
                 }
@@ -405,6 +410,7 @@
                 <option value="Eller">Eller's Algorithm</option>
                 <option value="AldousBroder">Aldous-Broder Algorithm</option>
                 <option value="RecursiveDivision">Recursive Division</option>
+                <option value="RandomRecursiveDivision" selected>Random Recursive Division</option>
                 <option value="DFSPRIM">Randomised DFS/PRIM</option>
             </select>
         </div>

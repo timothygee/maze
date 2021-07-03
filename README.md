@@ -9,6 +9,7 @@ This project implements some different maze generation and solution techniques, 
 * [Eller's Algorithm](http://www.neocomputer.org/projects/eller.html)
 * [Aldous-Border Algorithm](https://en.wikipedia.org/wiki/Maze_generation_algorithm#Aldous-Broder_algorithm)
 * [Recursive Division](https://en.wikipedia.org/wiki/Maze_generation_algorithm#Recursive_division_method)
+* [Random Recursive Division](http://weblog.jamisbuck.org/2015/1/15/better-recursive-division-algorithm.html)
 * Randomised Depth-first Search/Prim's Algorithm hybrid (DFS/PRIM)
 
 ## Solution Methods:
