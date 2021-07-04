@@ -1,4 +1,4 @@
-class DFSPRIM extends MazeAlgorithm {
+class DFSPrim extends MazeAlgorithm {
     generationDescription() {
         return "This algorithm uses a combination of Randomised Depth First Search and Randomised Prim's Algorithm</br>"
             + "This results in shorter paths than the full DFS Algorithm but much longer paths than Prim's Algorithm</br>"
@@ -17,7 +17,7 @@ class DFSPRIM extends MazeAlgorithm {
     }
     //This changes how often it will choose a random node rather then match a DFS algorithm
     //If the DFS algorithm gets stuck it will always choose a random node
-    //100 makes this behave the same as the PRIM algorithm
+    //100 makes this behave the same as the Prim algorithm
     //0 makes this behave close to the same as DFS
     generationOptions() {
         return [

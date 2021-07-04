@@ -115,16 +115,16 @@ class Maze {
                 return new DFS(this);
             case "Kruskal":
                 return new Kruskal(this);
-            case "PRIM":
-                return new PRIM(this);
+            case "Prim":
+                return new Prim(this);
             case "RecursiveDivision":
                 return new RecursiveDivision(this);
             case "RandomRecursiveDivision":
                 return new RandomRecursiveDivision(this);
             case "Wilson":
                 return new Wilson(this);
-            case "DFSPRIM":
-                return new DFSPRIM(this);
+            case "DFSPrim":
+                return new DFSPrim(this);
         }
         throw "Generator type \"" + type + "\" not supported";
     }
@@ -194,6 +194,8 @@ class Maze {
                 return new BFS(this);
             case "WallFollower":
                 return new WallFollower(this);
+            case "LabRat":
+                return new LabRat(this);
         }
         throw "Solver type \"" + type + "\" not supported";
     }

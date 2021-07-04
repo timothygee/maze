@@ -10,13 +10,14 @@ This project implements some different maze generation and solution techniques, 
 * [Aldous-Broder Algorithm](https://en.wikipedia.org/wiki/Maze_generation_algorithm#Aldous-Broder_algorithm)
 * [Recursive Division](https://en.wikipedia.org/wiki/Maze_generation_algorithm#Recursive_division_method)
 * [Random Recursive Division](http://weblog.jamisbuck.org/2015/1/15/better-recursive-division-algorithm.html)
-* Randomised Depth-first Search/Prim's Algorithm hybrid (DFS/PRIM)
+* Randomised Depth-first Search/Prim's Algorithm hybrid (DFS/Prim)
 
 ## Solution Methods:
 * [Breadth-first Search](https://en.wikipedia.org/wiki/Breadth-first_search)
 * [Depth-first Search](https://en.wikipedia.org/wiki/Depth-first_search)
 * [A*](https://en.wikipedia.org/wiki/A*_search_algorithm)
 * [Wall Follower](https://en.wikipedia.org/wiki/Maze-solving_algorithm#Wall_follower)
+* Lab Rat
 
 **To run, simply open Maze.html in your browser**
 
@@ -37,7 +38,7 @@ Algorithm specific generation options
   * Vertical Merge %: Likeliness of merging two cells vertically
 * Wilson's Algorithm
   * Next Node Selection: Which node should be selected to start the next path
-* Randomised DFS/PRIM
+* Randomised DFS/Prim
   * Select Random %: Allows you to define how often to choose a random node from where to continue the algorithm
 
 ### Solution Options

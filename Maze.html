@@ -75,6 +75,7 @@
     <script type='text/javascript' src="./algorithms/DFS.js"></script>
     <script type='text/javascript' src="./algorithms/DFSPrim.js"></script>
     <script type='text/javascript' src="./algorithms/Eller.js"></script>
+    <script type='text/javascript' src="./algorithms/LabRat.js"></script>
     <script type='text/javascript' src="./algorithms/Kruskal.js"></script>
     <script type='text/javascript' src="./algorithms/Prim.js"></script>
     <script type='text/javascript' src="./algorithms/RandomRecursiveDivision.js"></script>
@@ -332,11 +333,11 @@
                     var color = "";
                     if (cell.visited()) {
                         color = "lightpink";
-                        if (cell.getPathLength() != 0 && maze.endNode.getPathLength() != 0) {
-                            var per = cell.getPathLength() / maze.endNode.getPathLength();
-                            var hue=(0+(1-per)*360).toString(10);
-                            color = ["hsl(",hue,",50%,50%)"].join("");
-                        }
+                    }
+                    if (cell.getPathLength() != 0 && maze.endNode.getPathLength() != 0) {
+                        var per = cell.getPathLength() / maze.endNode.getPathLength();
+                        var hue=(0+(1-per)*360).toString(10);
+                        color = ["hsl(",hue,",50%,50%)"].join("");
                     }
                     //If the node is in the "next path"
                     if (cell.getNextPath()) {
@@ -418,14 +419,14 @@
             <label>Generation Algorithm:</label>
             <select id="mazetype">
                 <option value="DFS">Randomised Depth First Search</option>
-                <option value="PRIM">Randomised Prim's Algorithm</option>
+                <option value="Prim">Randomised Prim's Algorithm</option>
                 <option value="Kruskal">Randomized Kruskal's Algorithm</option>
                 <option value="Wilson">Wilson’s Algorithm</option>
                 <option value="Eller">Eller's Algorithm</option>
                 <option value="AldousBroder">Aldous-Broder Algorithm</option>
                 <option value="RecursiveDivision">Recursive Division</option>
                 <option value="RandomRecursiveDivision">Random Recursive Division</option>
-                <option value="DFSPRIM">Randomised DFS/PRIM</option>
+                <option value="DFSPrim">Randomised DFS/Prim</option>
             </select>
         </div>
         <div class="titledPanel">
@@ -457,6 +458,7 @@
                 <option value="DFS">Depth First Search</option>
                 <option value="BFS">Breadth First Search</option>
                 <option value="WallFollower">Wall Follower</option>
+                <option value="LabRat">Lab Rat</option>
             </select>
         </div>
         <div class="titledPanel" id="solveButtonDiv">
