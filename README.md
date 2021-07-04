@@ -7,7 +7,7 @@ This project implements some different maze generation and solution techniques, 
 * Randomised [Prim's Algorithm](https://en.wikipedia.org/wiki/Prim%27s_algorithm)
 * [Wilson's Algorithm](https://en.wikipedia.org/wiki/Loop-erased_random_walk#Uniform_spanning_tree)
 * [Eller's Algorithm](http://www.neocomputer.org/projects/eller.html)
-* [Aldous-Border Algorithm](https://en.wikipedia.org/wiki/Maze_generation_algorithm#Aldous-Broder_algorithm)
+* [Aldous-Broder Algorithm](https://en.wikipedia.org/wiki/Maze_generation_algorithm#Aldous-Broder_algorithm)
 * [Recursive Division](https://en.wikipedia.org/wiki/Maze_generation_algorithm#Recursive_division_method)
 * [Random Recursive Division](http://weblog.jamisbuck.org/2015/1/15/better-recursive-division-algorithm.html)
 * Randomised Depth-first Search/Prim's Algorithm hybrid (DFS/PRIM)
