@@ -92,7 +92,7 @@ class DFS extends MazeAlgorithm {
             path.push(node);
             if (node == this.endNode) {
                 for (var i = 0; i < path.length; ++i) {
-                    path[i].setPathLength(i);
+                    path[i].setPathLength(i+1);
                 }
                 return;
             }

@@ -87,7 +87,7 @@ class WallFollower extends MazeAlgorithm {
             }
         }
         for (var i = 0; i < path.length; ++i) {
-            path[i].setPathLength(i);
+            path[i].setPathLength(i+1);
         }
     }
 }

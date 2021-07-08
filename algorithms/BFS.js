@@ -21,7 +21,7 @@ class BFS extends MazeAlgorithm {
             if (node == this.endNode) {
                 path.push(node);
                 for (var i = 0; i < path.length; ++i) {
-                    path[i].setPathLength(i);
+                    path[i].setPathLength(i+1);
                 }
                 return;
             }

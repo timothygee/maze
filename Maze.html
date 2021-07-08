@@ -57,13 +57,14 @@
         .titledPanel > button { 
             width: 10em;
         }
-        [data-id=Maze] {
-            background-color: white;
+        #mazecontainer {
             margin: 1em;
         }
         #descriptions * {
             white-space: pre-line;
             margin-right: 1em;
+            margin-top: 0em;
+            padding-top: 0em;
         }
     </style>
     <script src="./jquery.min.js"></script>
@@ -86,18 +87,15 @@
     <script type="text/javascript">
         window.onload = function () {
             //Gets the maze html elemet
-            function getMaze(label) {
-                $("[data-maze]").detach();
-                var $new = $("[data-id=\"mazecontainer\"]").clone();
-                $new.find("[data-id=\"label\"]").text(label);
-                $new.attr("data-id", label);
-                $new.attr("data-maze", "true");
-                $new.insertBefore($("#descriptions"));
-                $new.css("display", "inline-block");
-                return $new.find("[data-id=\"maze\"]");
+            function getMaze() {
+                var maze = document.getElementById("mazecontainer");
+                var newMaze = maze.cloneNode();
+                document.body.insertBefore(newMaze, maze);
+                document.body.removeChild(maze);
+                return newMaze;
             }
             var maze = new Maze();
-            var $maze = getMaze("Maze");
+            var mazeElem = null;
             var $generate = $("#generate");
             var $generation = $("#mazetype");
             var $solution = $("#solutiontype");
@@ -109,20 +107,20 @@
             //Maze update
             maze.onUpdate(function (node) {
                 if (doUpdate) {
-                    draw(maze, $maze, node);
+                    draw(maze, node);
                 }
             });
 
             //Generation Setup
             maze.onBeforeGenerate(function () {
-                draw(maze, $maze, null);
+                draw(maze, null);
                 doUpdate = true;
             });
             maze.onAfterGenerate(function () {
                 doUpdate = false;
             });
             maze.onGenerated(function () {
-                draw(maze, $maze, null);
+                draw(maze, null);
                 //Display solve information
                 $("#generationTime").text("Maze Generation Time:" + maze.getGenerationTime() + "ms");
                 $("#generationUpdates").text("Maze Generation Updates:" + maze.getGenerationUpdates());
@@ -147,7 +145,7 @@
 
             //Solution setup
             maze.onBeforeSolve(function () {
-                draw(maze, $maze, null);
+                draw(maze, null);
                 doUpdate = true;
             });
             maze.onSolved(function () {
@@ -177,14 +175,14 @@
                 }
                 //Redraw maze
                 if (maze.resetSolution())
-                    draw(maze, $maze, null);
+                    draw(maze, null);
             });
             $generate.click(function () {
                 //Clear the description
                 $("[data-gen-results],[data-sol-results]").each(function (i, el) { $(el).text(""); });
                 doUpdate = false;
                 //Ger the maze and initialise it
-                $maze = getMaze("Maze");
+                mazeElem = getMaze();
                 var width = parseInt($("#width").val());
                 var height = parseInt($("#height").val());
                 var startend = $("#startendpos").val();
@@ -261,6 +259,35 @@
                 }
                 return extras;
             }
+            //Returns the SVG arrow used to indicate the start and end points of the maze
+            function getArrow(id) {
+                var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute('width', 10);
+                svg.setAttribute('height', 10);
+                svg.setAttribute("id", id);
+                var defs = document.createElementNS(svg.namespaceURI, 'defs');
+                var marker = document.createElementNS(svg.namespaceURI, 'marker');
+                marker.setAttribute('id', 'head');
+                marker.setAttribute('orient', 'auto');
+                marker.setAttribute('markerWidth', '2');
+                marker.setAttribute('markerHeight', '3');
+                marker.setAttribute('refX', '0.1');
+                marker.setAttribute('refY', '1');
+                var path1 = document.createElementNS(svg.namespaceURI, 'path');
+                path1.setAttribute("d", 'M0,0 V2 L1,1 Z');
+                path1.setAttribute('fill', '#0078D7');
+                marker.appendChild(path1);
+                defs.appendChild(marker);
+                var path2 = document.createElementNS(svg.namespaceURI, 'path');
+                path2.setAttribute('marker-end', 'url(#head)');
+                path2.setAttribute('stroke-width', '5');
+                path2.setAttribute('fill', 'none');
+                path2.setAttribute('d', 'M0,5 L5,5');
+                path2.setAttribute('stroke', '#0078D7');
+                svg.appendChild(defs);
+                svg.appendChild(path2);
+                return svg;
+            }
             //Return a random colour based on a string
             function seededColour(str) {
                 var hash = 0;
@@ -282,7 +309,7 @@
              * Otherwise, only one cell is updated per draw call
              */
             var queue = [];
-            function draw(maze, $maze, node) {
+            function draw(maze, node) {
                 if (drawing) {
                     //Something is still drawing, add the next item to the queue
                     if (node != null && !Array.isArray(node) && queue.length > 0) {
@@ -303,104 +330,161 @@
                     $solve.prop("disabled", true);
                     drawing = true;
                 }
-                function drawCell(cell, flashcell) {
-                    //Get the node we are updating
-                    var $og = $maze.find("[data-id=\"" + cell.getX() + ":" + cell.getY() + "\"]");
-                    var $cell;
-                    if ($og.length > 0) {
-                        $cell = $og;
+                var cellwidth = 20;
+                var innerwidth = cellwidth * 0.75;
+                var appendagewidth = (cellwidth - innerwidth)/2;
+                function drawNode(node, flash) {
+                    var svgNS = mazeElem.children[0].namespaceURI;
+                    var i = node.getX();
+                    var j = node.getY();
+                    var group = document.getElementById(i + ":" + j);
+                    var mid;
+                    if (group != null) {
+                        mid = group.children[0];
                     }
                     else {
                         //The cell doesn't exist, this must be the first call, create it.
-                        $cell = $("<div>");
-                        $cell.attr("data-id", cell.getX() + ":" + cell.getY());
-                        $cell.css("width", "1em");
-                        $cell.css("height", "1em");
-                        $cell.css("color", "black");
-                        $cell.css("display", "inline-block");
+                        group = document.createElementNS(svgNS, 'g');
+                        group.setAttribute("id", i + ":" + j);
+                        group.setAttribute("stroke-width", "0");
+                        group.setAttribute("fill", "white");
+                        group.setAttribute("shape-rendering", "crispEdges");
+                        mid = document.createElementNS(svgNS, 'path');
+                        mid.setAttribute('transform', 'translate(' + (i * cellwidth + appendagewidth) + ','+ (j * cellwidth + appendagewidth) + ')');
+                        group.appendChild(mid);
+                        mazeElem.children[0].appendChild(group);
                     }
-                    //Update borders
-                    $cell.css("border-top",     cell.hasTop()    ? "none": "solid black 0.07em");
-                    $cell.css("border-right",   cell.hasRight()  ? "none": "solid black 0.07em");
-                    $cell.css("border-bottom",  cell.hasBottom() ? "none": "solid black 0.07em");
-                    $cell.css("border-left",    cell.hasLeft()   ? "none": "solid black 0.07em");
-
-                    //Colors
-                    //When a maze is solved, it sets the path length from the start
-                    //We display this using a colour range
-                    //The colour will change the further from the start the node is
-                    //If the node is not in the solution but was visited (during generation or solving), then set its background colour too
-                    var color = "";
-                    if (cell.visited()) {
+                    var d = "M";
+                    if (node.hasTop()) {
+                        d += appendagewidth + " 0";
+                        d += " L" + (innerwidth + appendagewidth) + " 0";
+                        d += " L" + (innerwidth + appendagewidth) + " " + appendagewidth;
+                    }
+                    else {
+                        d += appendagewidth + " " + appendagewidth + "L" + (innerwidth + appendagewidth) + " " + appendagewidth;
+                    }
+                    if (node.hasRight()) {
+                        d += " L" + cellwidth + " " + appendagewidth;
+                        d += " L" + cellwidth + " " + (innerwidth + appendagewidth);
+                        d += " L" + (innerwidth + appendagewidth) + " " + (innerwidth + appendagewidth);
+                    }
+                    else {
+                        d += " L" + (innerwidth + appendagewidth) + " " + (innerwidth + appendagewidth);
+                    }
+                    if (node.hasBottom()) {
+                        d += " L" + (innerwidth + appendagewidth) + " " + cellwidth;
+                        d += " L" + appendagewidth + " " + cellwidth;
+                        d += " L" + appendagewidth + " " + (innerwidth + appendagewidth);
+                    }
+                    else {
+                        d += " L" + (appendagewidth) + " " + (innerwidth + appendagewidth);
+                    }
+                    if (node.hasLeft()) {
+                        d += " L" + 0 + " " + (innerwidth + appendagewidth);
+                        d += " L" + 0 + " " + (appendagewidth);
+                        d += " L" + (appendagewidth) + " " + (appendagewidth);
+                    }
+                    else {
+                        d += " L" + (appendagewidth) + " " + (appendagewidth);
+                    }
+                    d += " Z";
+                    mid.setAttribute("d", d);
+                    var color = "white";
+                    if (node.visited()) {
                         color = "lightpink";
                     }
-                    if (cell.getPathLength() != 0 && maze.endNode.getPathLength() != 0) {
-                        var per = cell.getPathLength() / maze.endNode.getPathLength();
+                    if (node.getPathLength() != 0 && maze.endNode.getPathLength() != 0) {
+                        var per = node.getPathLength() / maze.endNode.getPathLength();
                         var hue=(0+(1-per)*360).toString(10);
                         color = ["hsl(",hue,",50%,50%)"].join("");
                     }
                     //If the node is in the "next path"
-                    if (cell.getNextPath()) {
+                    if (node.getNextPath()) {
                         color = "#745FFF";
                     }
-                    //Set a random colour per the set of the cell
-                    var set = cell.getSet();
-                    if (set != null && cell.getPathLength() == 0) {
+                    //Set a random colour per the set of the node
+                    var set = node.getSet();
+                    if (set != null && node.getPathLength() == 0) {
                         color = seededColour(set+"".toString().padStart(6, '0'));
                     }
-                    //The start and end cells have a special colour
-                    if (maze.startNode.getX() == cell.getX() && maze.startNode.getY() == cell.getY() ||
-                        maze.endNode.getX() == cell.getX() && maze.endNode.getY() == cell.getY()) {
-                        color = "rgba(45, 45, 45, 0.5)";
+                    //The start and end nodes have a special colour
+                    if (maze.startNode.getX() == node.getX() && maze.startNode.getY() == node.getY()) {
+                        var prev = document.getElementById("startarrow");
+                        if (prev == null) {
+                            var arrow = getArrow('startarrow');
+                            var g = document.createElementNS(arrow.namespaceURI, 'g');
+                            var startend = $("#startendpos").val();
+                            if (startend == "T2B") {
+                                arrow.setAttribute('x', (i * cellwidth + appendagewidth));
+                                arrow.setAttribute('y', (j * cellwidth + appendagewidth));
+                                g.setAttribute('transform', 'rotate(90,' + (i * cellwidth + cellwidth/2) + ',' + (j * cellwidth + cellwidth/2) +')');
+                            }
+                            else {
+                                arrow.setAttribute('x', (i * cellwidth + appendagewidth));
+                                arrow.setAttribute('y', (j * cellwidth + 2*appendagewidth));
+                            }
+                            g.appendChild(arrow);
+                            mazeElem.children[0].appendChild(g);
+                        }
                     }
-                    //Set the colour to #1C0D3F, then wait and update it to the correct colour.
-                    //This will make it flash so we can easily see the cell being drawn
-                    if ($og.length == 0) {
-                        $maze.append($cell);
+                    if (maze.endNode.getX() == node.getX() && maze.endNode.getY() == node.getY()) {
+                        var prev = document.getElementById("endarrow");
+                        if (prev == null) {
+                            var arrow = getArrow('endarrow');
+                            var g = document.createElementNS(arrow.namespaceURI, 'g');
+                            var startend = $("#startendpos").val();
+                            if (startend == "T2B") {
+                                arrow.setAttribute('x', (i * cellwidth + innerwidth - appendagewidth));
+                                arrow.setAttribute('y', (j * cellwidth + appendagewidth));
+                                g.setAttribute('transform', 'rotate(90,' + (i * cellwidth + cellwidth/2) + ',' + (j * cellwidth + cellwidth/2)+')');
+                            }
+                            else {
+                                arrow.setAttribute('x', (i * cellwidth + innerwidth));
+                                arrow.setAttribute('y', (j * cellwidth + 2*appendagewidth));
+                            }
+                            g.appendChild(arrow);
+                            mazeElem.children[0].appendChild(g);
+                        }
                     }
-                    if (flashcell) {
-                        $cell.css("background-color", '#1C0D3F');
+                    if (flash) {
+                        mid.setAttribute("fill", '#1C0D3F');
                         setTimeout(function(){
-                            $cell.css('transition', 'background-color 0.01s ease-in-out 0.01s');
-                            $cell.css("background-color", color);
+                            mid.setAttribute("fill", color);
                         }, 0);
                     }
                     else {
-                        $cell.css("background-color", color);
+                        mid.setAttribute("fill", color);
                     }
                 }
-
-                //Used to know when to force cells to the next line
-                var linesin = false;
-                if ($maze.find("[data-linebreak]").length > 0) {
-                    linesin = true;
-                }
-                //No node passed, draw the entire maze
                 if (node == null) {
+                    if (mazeElem.children.length == 0) {
+                        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                        svg.setAttribute('width', maze.width * cellwidth + 2 * appendagewidth);
+                        svg.setAttribute('height', maze.height * cellwidth + 2 * appendagewidth);
+                        svg.setAttribute("id", "mazeSVG");
+                        mazeElem.appendChild(svg);
+                    }
                     for (var j = 0; j < maze.height; j++) {
                         for (var i = 0; i < maze.width; ++i) {
-                            drawCell(maze.getNode(i, j), false);
+                            node = drawNode(maze.getNode(i, j), false);
                         }
-                        if (linesin == false)
-                            $maze.append($("<div>").attr("data-linebreak", "true").css("display", "block"));
                     }
                 }
                 else if (Array.isArray(node)) {
                     for (var j = 0; j < node.length; j++) {
-                        drawCell(node[j], false);
+                        drawNode(node[j], false);
                     }
                 }
                 else {
-                    drawCell(node, true);
+                    drawNode(node, true);
                 }
-                //Wait and then get the next item in the queue
                 setTimeout(function () {
                     drawing = false;
                     $generate.prop("disabled", false);
                     $solve.prop("disabled", false);
                     if (queue.length > 0) {
                         var next = queue.splice(0, 1);
-                        draw(maze, $maze, next[0], true);
+                        draw(maze, next[0]);
                     }
                 }, 0);
             }
@@ -467,8 +551,7 @@
         </div>
     </div>
     </br>
-    <div data-id="mazecontainer" style="display:none">
-        <div data-id="maze" style="display:inline-block"> </div>
+    <div id="mazecontainer">
     </div>
     <div id="descriptions">
         <div id="generationDescription" class="options">

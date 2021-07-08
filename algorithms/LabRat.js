@@ -39,7 +39,7 @@ class LabRat extends MazeAlgorithm {
             //We have found the end of the maze, draw solution
             if (node == this.endNode) {
                 for (var i = 0; i < solution.length; ++i) {
-                    solution[i].setPathLength(i);
+                    solution[i].setPathLength(i+1);
                 }
                 break;
             }
