@@ -28,8 +28,6 @@
             background-color: #1E1E1E;
             color: white;
         }
-        .titledPanel {
-        }
         .titledPanel > *:first-child {
             line-height: 1.6em;
             height: 1.6em;
@@ -67,7 +65,6 @@
             padding-top: 0em;
         }
     </style>
-    <script src="./jquery.min.js"></script>
     <script type='text/javascript' src="./algorithms/MazeAlgorithm.js"></script>
     <script type='text/javascript' src="./algorithms/SetManager.js"></script>
     <script type='text/javascript' src="./algorithms/AldousBroder.js"></script>
@@ -96,11 +93,11 @@
             }
             var maze = new Maze();
             var mazeElem = null;
-            var $generate = $("#generate");
-            var $generation = $("#mazetype");
-            var $solution = $("#solutiontype");
-            var $solve = $("#solve");
-            $solve.prop('disabled', true);
+            var generateBtn = document.getElementById("generate");
+            var generationAlgorithm = document.getElementById("mazetype");
+            var solveBtn = document.getElementById("solve");
+            var solutionAlgorithm = document.getElementById("solutiontype");
+            solveBtn.disabled = true;
             var drawing = false;
             var doUpdate = true;
 
@@ -122,25 +119,33 @@
             maze.onGenerated(function () {
                 draw(maze, null);
                 //Display solve information
-                $("#generationTime").text("Maze Generation Time:" + maze.getGenerationTime() + "ms");
-                $("#generationUpdates").text("Maze Generation Updates:" + maze.getGenerationUpdates());
+                document.getElementById("generationTime").textContent = "Maze Generation Time:" + maze.getGenerationTime() + "ms";
+                document.getElementById("generationUpdates").textContent = "Maze Generation Updates:" + maze.getGenerationUpdates();
             });
-            $generation.change(function () {
+            generationAlgorithm.addEventListener("change", function (evt) {
                 //Clear the description
-                $("[data-gen-results],[data-sol-results]").each(function (i, el) { $(el).text(""); });
-                $("[data-maze]").detach();
-                var $generationDiv = $("#generationDiv");
+                document.querySelectorAll("[data-gen-results],[data-sol-results]").forEach(function (elem) {
+                    elem.textContent = "";
+                });
+                var svg = document.getElementById("mazeSVG");
+                if (svg != null) {
+                    svg.parentElement.removeChild(svg);
+                }
+                var generationDiv = document.getElementById("generationDiv");
                 //Remove extra solution options
-                $generationDiv.find("[data-generation-options]").detach();
-                    //Update/Draw the solution options in the GUI
-                var options = maze.getGenerationOptions($generation.val());
+                generationDiv.querySelectorAll("[data-generation-options]").forEach(function (elem) {
+                    elem.parentElement.removeChild(elem);
+                });
+                //Update/Draw the solution options in the GUI
+                var options = maze.getGenerationOptions(generationAlgorithm.value);
                 if (options.length > 0) {
                     var extras = generateOptions(options, "generation");
-                    for (var $extra of extras) {
-                        $extra.insertBefore($("#generateButtonDiv"));
+                    var generateButtonDiv = document.getElementById("generateButtonDiv");
+                    for (var extra of extras) {
+                        generateButtonDiv.parentElement.insertBefore(extra, generateButtonDiv);
                     }
                 }
-                $("#generationMessage").html(maze.getGenerationDescription());
+                document.getElementById("generationMessage").innerHTML = maze.getGenerationDescription();
             });
 
             //Solution setup
@@ -151,111 +156,125 @@
             maze.onSolved(function () {
                 doUpdate = false;
                 //Display solve information
-                $("#solveTime").text("Maze Solve Time:" +maze.getSolveTime() + "ms");
-                $("#solveVisits").text("Maze Nodes Visited:" + maze.getSolveVisits());
-                $("#solveUpdates").text("Maze Solve Updates:" + maze.getSolveUpdates());
+                document.getElementById("solveTime").textContent = "Maze Solve Time:" + maze.getSolveTime() + "ms";
+                document.getElementById("solveVisits").textContent = "Maze Nodes Visited:" + maze.getSolveVisits();
+                document.getElementById("solveUpdates").textContent = "Maze Solve Updates:" + maze.getSolveUpdates();
             });
-            $solution.change(function () {
+            solutionAlgorithm.addEventListener("change", function () {
                 //Clear the description
-                $("[data-sol-results]").each(function (i, el) { $(el).text(""); });
-                var $solutionDiv = $("#solutionDiv");
+                document.querySelectorAll("[data-sol-results]").forEach(function (elem) {
+                    elem.textContent = "";
+                });
+                var solutionDiv = document.getElementById("solutionDiv");
                 //Remove extra solution options
-                $solutionDiv.find("[data-solution-options]").detach();
-                if ($solution.val() != "None") {
+                solutionDiv.querySelectorAll("[data-solution-options]").forEach(function (elem) {
+                    elem.parentElement.removeChild(elem);
+                });
+                if (solutionAlgorithm.value != "None") {
                     //Update/Draw the solution options in the GUI
-                    var options = maze.getSolutionOptions($solution.val());;
+                    var options = maze.getSolutionOptions(solutionAlgorithm.value);;
                     if (options.length > 0) {
                         var extras = generateOptions(options, "solution");
-                        for (var $extra of extras) {
-                            $extra.insertBefore($("#solveButtonDiv"));
+                        var solveButtonDiv = document.getElementById("solveButtonDiv");
+                        for (var extra of extras) {
+                            solveButtonDiv.parentElement.insertBefore(extra, solveButtonDiv);
                         }
                     }
-                    $("#solutionMessage").html(maze.getSolutionDescription());
+                    document.getElementById("solutionMessage").innerHTML = maze.getSolutionDescription();
                     doUpdate = false;
                 }
                 //Redraw maze
                 if (maze.resetSolution())
                     draw(maze, null);
             });
-            $generate.click(function () {
+            generateBtn.addEventListener("click", function () {
                 //Clear the description
-                $("[data-gen-results],[data-sol-results]").each(function (i, el) { $(el).text(""); });
+                document.querySelectorAll("[data-gen-results],[data-sol-results]").forEach(function (elem) {
+                    elem.textContent = "";
+                });
                 doUpdate = false;
                 //Ger the maze and initialise it
                 mazeElem = getMaze();
-                var width = parseInt($("#width").val());
-                var height = parseInt($("#height").val());
-                var startend = $("#startendpos").val();
+                var width = parseInt(document.getElementById("width").value);
+                var height = parseInt(document.getElementById("height").value);
+                var startend = document.getElementById("startendpos").value;
                 maze.initialiseMaze(width, height, startend);
                 //Get the generation options from the GUI
-                var mazeOptions = maze.getGenerationOptions($generation.val());
+                var mazeOptions = maze.getGenerationOptions(generationAlgorithm.value);
                 var options = {};
                 for (var mazeOption of mazeOptions) {
-                    options[mazeOption["id"]] = $("#auto_generation_" + mazeOption["id"]).val();
+                    options[mazeOption["id"]] = document.getElementById("auto_generation_" + mazeOption["id"]).value;
                 }
                 //generate the maze
-                maze.generateMaze($generation.val(), options);
+                setTimeout(function () {
+                    maze.generateMaze(generationAlgorithm.value, options);
+                });
             });
-            $solve.click(function () {
+            solveBtn.addEventListener("click", function () {
                 //Clear the description
-                $("[data-sol-results]").each(function (i, el) { $(el).text(""); });
+                document.querySelectorAll("[data-sol-results]").forEach(function (elem) {
+                    elem.textContent = "";
+                });
                 doUpdate = false;
                 //Get the solution options from the GUI
-                var mazeOptions = maze.getSolutionOptions($solution.val());
+                var mazeOptions = maze.getSolutionOptions(solutionAlgorithm.value);
                 var options = {};
                 for (var mazeOption of mazeOptions) {
-                    options[mazeOption["id"]] = $("#auto_solution_" + mazeOption["id"]).val();
+                    options[mazeOption["id"]] = document.getElementById("auto_solution_" + mazeOption["id"]).value;
                 }
                 //Solve the maze
-                maze.solveMaze($solution.val(), options);
+                setTimeout(function () {
+                    maze.solveMaze(solutionAlgorithm.value, options);
+                });
             });
 
             //This method is used to convert algorithm options to gui elements
             function generateOptions(options, type) {
                 var extras = [];
                 for (var option of options) {
-                    var $panel = $("<div>").addClass("titledPanel");
-                    $panel.attr("data-" + type + "-options", "true");
+                    var panel = document.createElement('div');
+                    panel.className = 'titledPanel';
+                    panel.setAttribute("data-" + type + "-options", "true");
                     if ("tooltip" in option) {
-                        $panel.attr("title", option["tooltip"]);
+                        panel.setAttribute("title", option["tooltip"]);
                     }
+                    var label = document.createElement("label");
+                    label.textContent = option["text"];
+                    panel.appendChild(label);
                     switch (option["type"]) {
                         case "select":
-                            var $select = $("<select>");
+                            var elem = document.createElement("select");
                             for (var selectOption of option["options"]) {
-                                var $option = $("<option>").val(selectOption["value"]).text(selectOption["text"]);
+                                var optionElem = document.createElement('option');
+                                optionElem.value = selectOption["value"];
+                                optionElem.textContent = selectOption["text"];
                                 if ("selected" in selectOption) {
-                                    $option.attr("selected");
+                                    optionElem.setAttribute("selected");
                                 }
-                                $select.append($option);
+                                elem.appendChild(optionElem);
                             }
-                            $panel.append($("<label>").text(option["text"]));
-                            $panel.append($select);
-                            $select.attr("id", "auto_" + type + "_" + option["id"]);
                             break;
                         case "number":
-                            $panel.append($("<label>").text(option["text"]));
-                            var $input = $("<input>").attr("type", "number");
-                            $input.attr("min", option["min"]);
-                            $input.attr("max", option["max"]);
-                            $input.attr("value", option["default"]);
-                            $input.attr("id", "auto_" + type + "_" + option["id"]);
-                            $input.css("width", "100%");
-                            $panel.append($input);
+                            var elem = document.createElement("input");
+                            elem.setAttribute("type", "number");
+                            elem.setAttribute("min", option["min"]);
+                            elem.setAttribute("max", option["max"]);
+                            elem.setAttribute("value", option["default"]);
+                            elem.style.width = "100%";
                             break;
                         case "text":
-                            $panel.append($("<label>").text(option["text"]));
-                            var $input = $("<input>").attr("type", "text");
-                            $input.attr("value", option["default"]);
-                            $input.attr("id", "auto_" + type + "_" + option["id"]);
-                            $input.css("width", "100%");
-                            $input.change(function(evt) {
+                            var elem = document.createElement("input");
+                            elem.setAttribute("type", "text");
+                            elem.setAttribute("value", option["default"]);
+                            elem.style.width = "100%";
+                            elem.addEventListener("change", function(evt) {
                                 option["validate"](evt.target, evt.target.value);
                             });
-                            $panel.append($input);
                             break;
                     }
-                    extras.push($panel);
+                    elem.setAttribute("id", "auto_" + type + "_" + option["id"]);
+                    panel.appendChild(elem);
+                    extras.push(panel);
                 }
                 return extras;
             }
@@ -326,15 +345,15 @@
                 }
                 else {
                     //Disable the generate and solve buttons while drawing
-                    $generate.prop("disabled", true);
-                    $solve.prop("disabled", true);
+                    generateBtn.disabled = true;
+                    solveBtn.disabled = true;
                     drawing = true;
                 }
                 var cellwidth = 20;
                 var innerwidth = cellwidth * 0.75;
                 var appendagewidth = (cellwidth - innerwidth)/2;
-                function drawNode(node, flash) {
-                    var svgNS = mazeElem.children[0].namespaceURI;
+                var namespaceURI;
+                function drawNode(node, flash, frag) {
                     var i = node.getX();
                     var j = node.getY();
                     var group = document.getElementById(i + ":" + j);
@@ -344,15 +363,15 @@
                     }
                     else {
                         //The cell doesn't exist, this must be the first call, create it.
-                        group = document.createElementNS(svgNS, 'g');
+                        group = document.createElementNS("http://www.w3.org/2000/svg", 'g');
                         group.setAttribute("id", i + ":" + j);
                         group.setAttribute("stroke-width", "0");
                         group.setAttribute("fill", "white");
                         group.setAttribute("shape-rendering", "crispEdges");
-                        mid = document.createElementNS(svgNS, 'path');
+                        mid = document.createElementNS("http://www.w3.org/2000/svg", 'path');
                         mid.setAttribute('transform', 'translate(' + (i * cellwidth + appendagewidth) + ','+ (j * cellwidth + appendagewidth) + ')');
                         group.appendChild(mid);
-                        mazeElem.children[0].appendChild(group);
+                        frag.appendChild(group);
                     }
                     var d = "M";
                     if (node.hasTop()) {
@@ -413,7 +432,7 @@
                         if (prev == null) {
                             var arrow = getArrow('startarrow');
                             var g = document.createElementNS(arrow.namespaceURI, 'g');
-                            var startend = $("#startendpos").val();
+                            var startend = document.getElementById("startendpos").value;
                             if (startend == "T2B") {
                                 arrow.setAttribute('x', (i * cellwidth + appendagewidth));
                                 arrow.setAttribute('y', (j * cellwidth + appendagewidth));
@@ -424,7 +443,7 @@
                                 arrow.setAttribute('y', (j * cellwidth + 2*appendagewidth));
                             }
                             g.appendChild(arrow);
-                            mazeElem.children[0].appendChild(g);
+                            frag.appendChild(g);
                         }
                     }
                     if (maze.endNode.getX() == node.getX() && maze.endNode.getY() == node.getY()) {
@@ -432,7 +451,7 @@
                         if (prev == null) {
                             var arrow = getArrow('endarrow');
                             var g = document.createElementNS(arrow.namespaceURI, 'g');
-                            var startend = $("#startendpos").val();
+                            var startend = document.getElementById("startendpos").value;
                             if (startend == "T2B") {
                                 arrow.setAttribute('x', (i * cellwidth + innerwidth - appendagewidth));
                                 arrow.setAttribute('y', (j * cellwidth + appendagewidth));
@@ -443,7 +462,7 @@
                                 arrow.setAttribute('y', (j * cellwidth + 2*appendagewidth));
                             }
                             g.appendChild(arrow);
-                            mazeElem.children[0].appendChild(g);
+                            frag.appendChild(g);
                         }
                     }
                     if (flash) {
@@ -457,17 +476,22 @@
                     }
                 }
                 if (node == null) {
+                    var frag = null;
                     if (mazeElem.children.length == 0) {
                         var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                         svg.setAttribute('width', maze.width * cellwidth + 2 * appendagewidth);
                         svg.setAttribute('height', maze.height * cellwidth + 2 * appendagewidth);
                         svg.setAttribute("id", "mazeSVG");
                         mazeElem.appendChild(svg);
+                        frag = document.createDocumentFragment();
                     }
                     for (var j = 0; j < maze.height; j++) {
                         for (var i = 0; i < maze.width; ++i) {
-                            node = drawNode(maze.getNode(i, j), false);
+                            node = drawNode(maze.getNode(i, j), false, frag);
                         }
+                    }
+                    if (frag != null) {
+                        svg.appendChild(frag);
                     }
                 }
                 else if (Array.isArray(node)) {
@@ -480,8 +504,8 @@
                 }
                 setTimeout(function () {
                     drawing = false;
-                    $generate.prop("disabled", false);
-                    $solve.prop("disabled", false);
+                    generateBtn.disabled = false;
+                    solveBtn.disabled = false;
                     if (queue.length > 0) {
                         var next = queue.splice(0, 1);
                         draw(maze, next[0]);
@@ -490,8 +514,8 @@
             }
 
             //Initialise generation/solutions descriptions
-            $generation.change();
-            $solution.change();
+            generationAlgorithm.dispatchEvent(new Event("change"));
+            solutionAlgorithm.dispatchEvent(new Event("change"));
         };
         /* ]]> */
     </script>
