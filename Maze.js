@@ -22,7 +22,7 @@ class Maze {
         this._initialisationTime = null;
         this._solveTime = null;
         this._sendUpdates = true;
-        this._sendUpdatesQueue = [];
+        this._sendUpdatesQueue = {};
     }
     /****************************************\
                  Getters/Setters
@@ -44,8 +44,8 @@ class Maze {
     }
     set sendUpdates(value) {
         if (value == true) {
-            this.handleEvent(this._onUpdate, this._sendUpdatesQueue);
-            this._sendUpdatesQueue = [];
+            this.handleEvent(this._onUpdate, Object.values(this._sendUpdatesQueue));
+            this._sendUpdatesQueue = {};
         }
         this._sendUpdates = value;
     }
@@ -88,7 +88,7 @@ class Maze {
                         if (this.sendUpdates)
                             this.handleEvent(this._onUpdate, node);
                         else
-                            this._sendUpdatesQueue.push(node);
+                            this._sendUpdatesQueue[node.getX()+":"+node.getY()] = node;//If a node is already in the dict overwrite it
                     }
                 })()).bind(this));
             }

@@ -154,9 +154,11 @@ class Wilson extends MazeAlgorithm {
                 var previous = nextNode;
                 for (var i = path.length - 1; i >= 0; i--) {
                     let node = path[i];
+                    this.maze.sendUpdates = false;
                     node.visit();
                     node.resetNextPath();
                     this.joinNeighbours(node, previous);
+                    this.maze.sendUpdates = true;
                     previous = node;
                     remaining.splice(remaining.indexOf(node), 1);
                 }

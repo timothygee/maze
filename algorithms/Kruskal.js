@@ -30,19 +30,22 @@ class Kruskal extends MazeAlgorithm {
                         node2: this.maze.getNode(i, j + 1)
                     });
                 }
-                sets.push(node);
             }
         }
         while (walls.length > 0) {
             //Remove a random wall from the wall list
             var { node1, node2 } = this.pickRandom(walls, true);
+            //If neither node is in a set yet, add one
+            if (node1.getSet() == null && node1.getSet() == null) {
+                sets.push(node1);
+            }
             //Attempt to join the nodes (remove wall)
+            this.maze.sendUpdates = false;
             if (sets.merge(node1, node2)) {
                 //If successful, join the neighbours
-                node1.visit();
-                node2.visit();
                 this.joinNeighbours(node2, node1);
             }
+            this.maze.sendUpdates = true;
         }
     }
 }

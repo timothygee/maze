@@ -110,8 +110,8 @@
 
             //Generation Setup
             maze.onBeforeGenerate(function () {
-                draw(maze, null);
                 doUpdate = true;
+                draw(maze, null);
             });
             maze.onAfterGenerate(function () {
                 doUpdate = false;
@@ -206,9 +206,7 @@
                     options[mazeOption["id"]] = document.getElementById("auto_generation_" + mazeOption["id"]).value;
                 }
                 //generate the maze
-                setTimeout(function () {
-                    maze.generateMaze(generationAlgorithm.value, options);
-                });
+                maze.generateMaze(generationAlgorithm.value, options);
             });
             solveBtn.addEventListener("click", function () {
                 //Clear the description
@@ -223,9 +221,7 @@
                     options[mazeOption["id"]] = document.getElementById("auto_solution_" + mazeOption["id"]).value;
                 }
                 //Solve the maze
-                setTimeout(function () {
-                    maze.solveMaze(solutionAlgorithm.value, options);
-                });
+                maze.solveMaze(solutionAlgorithm.value, options);
             });
 
             //This method is used to convert algorithm options to gui elements

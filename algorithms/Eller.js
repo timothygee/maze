@@ -21,11 +21,11 @@ class Eller extends MazeAlgorithm {
                 "id": "horizontalMerge",
                 "min": 1,
                 "max": 99,
-                "default": 70
+                "default": 60
             },
             {
                 "type": "number",
-                "text": "vertical Merge %",
+                "text": "Vertical Merge %",
                 "id": "verticalMerge",
                 "min": 1,
                 "max": 99,
@@ -36,7 +36,7 @@ class Eller extends MazeAlgorithm {
     generateMaze(options) {
         var sets = new SetManager();
         var setCounter = 0;
-        var horizontalMerge = options["horizontalMerge"] / 100 || 0.7;
+        var horizontalMerge = options["horizontalMerge"] / 100 || 0.6;
         var verticalMerge = options["verticalMerge"] / 100 || 0.3;
         for (var j = 0; j < this.height; ++j) {
             //If node is not visited, then add it to the set manager
@@ -53,9 +53,11 @@ class Eller extends MazeAlgorithm {
                 var leftNode = this.maze.getNode(i, j);
                 var rightNode = this.maze.getNode(i + 1, j);
                 if (Math.random() < horizontalMerge || j == this.height - 1) {
+                    this.maze.sendUpdates = false;
                     if (sets.merge(leftNode, rightNode)) {
                         this.joinNeighbours(leftNode, rightNode);
                     }
+                    this.maze.sendUpdates = true;
                 }
             }
             //For all rows but the last row
@@ -69,9 +71,11 @@ class Eller extends MazeAlgorithm {
                         for (var topNode of nodes) {
                             if (Math.random() < verticalMerge) {
                                 var bottomNode = this.maze.getNode(topNode.getX(), topNode.getY() + 1);
+                                this.maze.sendUpdates = false;
                                 sets.push(bottomNode, topNode.getSet());
                                 this.joinNeighbours(topNode, bottomNode);
                                 bottomNode.visit();
+                                this.maze.sendUpdates = true;
                                 vertical = true;
                                 //If the set has already been looped through without merging
                                 //As soon as it merges once, stop the loop

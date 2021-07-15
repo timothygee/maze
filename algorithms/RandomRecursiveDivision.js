@@ -45,9 +45,20 @@ class RandomRecursiveDivision extends MazeAlgorithm {
             }
             //Get the first two nodes and create sets for each
             var node1 = this.pickRandom(areaNodes, true);
-            sets.push(node1);
             var node2 = this.pickRandom(areaNodes, true);
-            sets.push(node2);
+            //Try to make the maze solve left to right
+            if (node1.getX() < node2.getX()) {
+                sets.push(node2);
+                sets.push(node1);
+            }
+            else if (node1.getX() == node2.getX() && node1.getY() > node2.getY()) {
+                sets.push(node2);
+                sets.push(node1);
+            }
+            else {
+                sets.push(node1);
+                sets.push(node2);
+            }
             var total = areaNodes.length;//Total amount of merges required
             while (total > 0) {
                 //For each of the sets, find one item to add then repeat
@@ -69,6 +80,7 @@ class RandomRecursiveDivision extends MazeAlgorithm {
                 }
             }
             var neighbours = [];
+            this.maze.sendUpdates = false;
             for (var x = 0; x < this.width; ++x) {
                 for (var y = 0; y < this.height; ++y) {
                     if (x < this.width - 1) {
@@ -94,6 +106,7 @@ class RandomRecursiveDivision extends MazeAlgorithm {
             //Pick a random wall just created and remove it
             var [ node3, node4 ] = this.pickRandom(neighbours);
             this.joinNeighbours(node3, node4);
+            this.maze.sendUpdates = true;
             //Remove both sets and add an area for each to the areas list
             this.maze.sendUpdates = false;
             for (var set of sets) {

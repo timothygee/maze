@@ -88,8 +88,10 @@ class RecursiveDivision extends MazeAlgorithm {
                     var node1 = this.maze.getNode(area["position"], i);
                     var node2 = this.maze.getNode(area["position"] + 1, i);
                     //Remove the walls between the two nodes
+                    this.maze.sendUpdates = false;
                     node1.setRight(null);
                     node2.setLeft(null);
+                    this.maze.sendUpdates = true;
                 }
                 //Add the subsections to the areas array (at the beginining)
                 areas.splice(0, 0, ...this.split(area["position"] + 1, area["top"], area["right"], area["bottom"]));
@@ -106,8 +108,10 @@ class RecursiveDivision extends MazeAlgorithm {
                     var node1 = this.maze.getNode(i, area["position"]);
                     var node2 = this.maze.getNode(i, area["position"] + 1);
                     //Remove the walls between the two nodes
+                    this.maze.sendUpdates = false;
                     node1.setBottom(null);
                     node2.setTop(null);
+                    this.maze.sendUpdates = true;
                 }
                 //Add the subsections to the areas array (at the beginining)
                 areas.splice(0, 0, ...this.split(area["left"], area["position"] + 1, area["right"], area["bottom"]));
